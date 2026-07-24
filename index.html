@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNI — Noticias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0E1116;
+  --surface: #161B22;
+  --surface-2: #1D232C;
+  --ink: #E8E6E1;
+  --muted: #8B93A1;
+  --gold: #C9A227;
+  --teal: #2FA8A0;
+  --rule: #262B33;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', Arial, sans-serif;
+}
+a { color: inherit; }
+
+.ticker-wrap {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 7px 0;
+}
+.ticker {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  animation: scroll-left 32s linear infinite;
+}
+.ticker span { margin-right: 40px; }
+.ticker .dot { color: var(--gold); }
+@keyframes scroll-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker { animation: none; }
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(14,17,22,0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.header-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.brand .mark {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 1px;
+  background: linear-gradient(120deg, var(--gold), var(--teal));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.brand .sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+nav.tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+nav.tabs button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+nav.tabs button:hover { color: var(--ink); border-color: var(--rule); }
+nav.tabs button.active {
+  color: var(--bg);
+  background: var(--gold);
+}
+
+.search-row {
+  max-width: 980px;
+  margin: 20px auto 0;
+  padding: 0 20px;
+  display: flex;
+  gap: 10px;
+}
+.search-row input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+}
+.search-row input:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.subchips {
+  max-width: 980px;
+  margin: 14px auto 0;
+  padding: 0 20px;
+  display: none;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.subchips.visible { display: flex; }
+.subchips button {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.subchips button.active {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+main {
+  max-width: 980px;
+  margin: 24px auto 80px;
+  padding: 0 20px;
+}
+.section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 30px 0 14px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title .count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.card:hover { border-color: var(--teal); transform: translateY(-2px); }
+.card .cat-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--gold);
+}
+.card h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0;
+}
+.card h3 a { text-decoration: none; }
+.card h3 a:hover { color: var(--teal); }
+.card p.desc {
+  font-size: 0.86rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+.card .meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 4px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.card .actions button {
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 5px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+.card .actions button:hover { color: var(--ink); border-color: var(--muted); }
+.card .actions button.on {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+}
+
+footer {
+  text-align: center;
+  padding: 30px 20px 50px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+}
+</style>
+</head>
+<body>
+
+<div class="ticker-wrap">
+  <div class="ticker" id="tickerText"></div>
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="mark">UNI</span>
+      <span class="sub">actualizado 24/07/2026 04:47 UTC</span>
+    </div>
+    <nav class="tabs" id="mainTabs"></nav>
+  </div>
+  <div class="search-row">
+    <input type="text" id="buscador" placeholder="Buscar noticias por palabra clave...">
+  </div>
+  <div class="subchips" id="subchips"></div>
+</header>
+
+<main id="main"></main>
+
+<footer>UNI · fuente: GNews API · generado automáticamente cada día</footer>
+
+<script id="datos-noticias" type="application/json">{"generated_at": "2026-07-24T04:47:56.915663+00:00", "categorias": {"inicio": {"label": "Inicio", "articles": [{"title": "Así serán los nuevos billetes de euro: estos son los diseños finalistas", "description": "El Banco Central Europeo abre una encuesta pública para elegir entre diez opciones inspiradas en la cultura europea y en ríos y aves", "url": "https://www.diariosur.es/sociedad/nuevos-billetes-euro-disenos-finalistas-20260723184252-nt.html", "source": "Diario Sur", "publishedAt": "2026-07-23T16:42:53Z"}, {"title": "Retiran millones de huevos por posible contaminación con salmonela", "description": "Los productos fueron distribuidos entre el 6 de junio y el 3 de julio de 2026, con fechas de consumo preferente que van del 20 de julio al 17 de agosto.", "url": "https://www.primerahora.com/noticias/estados-unidos/notas/retiran-millones-de-huevos-por-posible-contaminacion-con-salmonela/", "source": "Primera Hora", "publishedAt": "2026-07-23T16:42:15Z"}, {"title": "Hantavirus en Venezuela: qué se sabe de los casos confirmados y la alerta en Barinas", "description": "Los casos confirmados corresponden a una misma familia del municipio Miranda, al sur de Anzoátegui, según reportes difundidos por autoridades y organizaciones médicas.", "url": "https://www.bloomberglinea.com/latinoamerica/venezuela/hantavirus-en-venezuela-que-se-sabe-de-los-casos-confirmados-y-la-alerta-en-barinas/", "source": "Bloomberg Línea", "publishedAt": "2026-07-23T16:41:56Z"}, {"title": "La Cámara de Representantes vuelve a votar en contra de la guerra en Irán", "description": "Conoce los detalles sobre lo sucedido esta mañana en la Cámara de Representantes de Estados Unidos, donde se aprobó un nuevo texto que pide la retirada de las tropas estadounidenses de la guerra contra Irán, una medida de carácter simbólico ante la oposición de la Casa Blanca | N+ Univision Estados Unidos | Univision", "url": "https://www.univision.com/noticias/estados-unidos/la-camara-de-representantes-vuelve-a-votar-en-contra-de-la-guerra-en-iran", "source": "Univision", "publishedAt": "2026-07-23T16:41:33Z"}, {"title": "Leonardo, Callas y Curie o aves de Europa, cultura o naturaleza en los nuevos billetes del euro", "description": "La BCE ha desvelado los diez diseños finalistas para los futuros billetes en euros, con cultura y naturaleza en juego: Leonardo, Maria Callas, Beethoven, Marie Curie y aves símbolo de la biodiversidad europea", "url": "https://es.euronews.com/business/2026/07/23/leonardo-callas-y-curie-o-aves-de-europa-cultura-o-naturaleza-en-los-nuevos-billetes-del-e", "source": "Euronews.com", "publishedAt": "2026-07-23T16:41:22Z"}, {"title": "Estos son los mejores y peores hábitos para tu hígado", "description": "Las enfermedades hepáticas están en aumento en todo el mundo. Tu dieta, tu rutina de ejercicios y otras afecciones médicas pueden afectar tu riesgo.", "url": "https://www.nytimes.com/es/2026/07/23/espanol/estilos-de-vida/higado-mejores-peores-habitos.html", "source": "The New York Times", "publishedAt": "2026-07-23T16:40:25Z"}, {"title": "Ucrania: Fedorov no acepta cargo propuesto por Zelenski", "description": "El exministro de Defensa dijo que desea terminar las reformas que impulsó desde ese puesto, en el que estuvo solamente seis meses. Su salida gatilló una ola de protestas.", "url": "https://www.dw.com/es/ucrania-fedorov-no-aceptar%C3%A1-otro-cargo-propuesto-por-zelenski/a-78090985", "source": "DW.com", "publishedAt": "2026-07-23T16:40:18Z"}, {"title": "La carta de Infantino a la Selección Argentina tras perder la final del Mundial", "description": "El presidente de la FIFA le envió una carta a Claudio “Chiqui” Tapia en la que destacó la campaña argentina, el trabajo de Lionel Scaloni y el acompañamiento de los hinchas.", "url": "https://www.labrujula24.com/notas/2026/07/23/la-carta-de-infantino-a-la-seleccion-argentina-tras-perder-la-final-del-mundial-n511882/", "source": "La Brújula 24", "publishedAt": "2026-07-23T16:38:56Z"}]}, "inversion": {"label": "Inversión", "articles": []}, "negocios": {"label": "Negocios", "articles": []}, "tecnologia": {"label": "Tecnología", "articles": []}, "geopolitica": {"label": "Política internacional", "articles": []}, "cripto": {"label": "Cripto", "articles": [{"title": "Binance cumple 9 años: casi la mitad de los holders de criptomonedas del mundo ya opera en su plataforma", "description": "La compañía superó los 323 millones de usuarios, acumuló US$156 billones en volumen histórico de trading y acelera su transformación hacia una superapp financiera que integra activos digitales e instrumentos tradicionales - LA NACION", "url": "https://www.lanacion.com.ar/economia/binance-cumple-9-anos-casi-la-mitad-de-los-holders-de-criptomonedas-del-mundo-ya-opera-en-su-nid23072026/", "source": "La Nacion", "publishedAt": "2026-07-23T13:20:19Z"}, {"title": "Paso a paso para invertir en criptomonedas y cuál es su valor este jueves 23 de julio", "description": "Así se han movido las criptomonedas en las últimas horas", "url": "https://www.infobae.com/tecno/2026/07/23/paso-a-paso-para-invertir-en-criptomonedas-y-cual-es-su-valor-este-jueves-23-de-julio/", "source": "infobae", "publishedAt": "2026-07-23T11:45:50Z"}, {"title": "La Unión Europea acordó un nuevo paquete de sanciones contra Rusia para reforzar la presión económica por la invasión de Ucrania", "description": "El bloque de los 27 cerró la ronda de medidas tras meses de negociación, con foco en el petróleo, las finanzas, las criptomonedas y la red marítima usada por Moscú para sostener la guerra", "url": "https://www.infobae.com/america/mundo/2026/07/23/la-union-europea-acordo-un-nuevo-paquete-de-sanciones-contra-rusia-para-reforzar-la-presion-economica-por-la-invasion-de-ucrania/", "source": "infobae", "publishedAt": "2026-07-23T11:19:52Z"}, {"title": "La UE aprueba el 21º paquete de sanciones contra Rusia", "description": "Los embajadores de los Veintisiete deciden implementar nuevas penas como la extensión de la limitación del precio del petróleo ruso, mayores restricciones al sector financiero y las criptomonedas y medidas contra la \"flota fantasma\"", "url": "https://www.latribunadeciudadreal.es/noticia/z744b2071-9a2b-40df-a48a2a817c05a384/202607/la-ue-aprueba-el-21-paquete-de-sanciones-contra-rusia", "source": "La Tribuna de Ciudad Real", "publishedAt": "2026-07-23T10:30:00Z"}, {"title": "La UE acuerda un nuevo paquete de sanciones a Rusia, con un año de tope al precio del petróleo", "description": "El texto también incluye restricciones y prohibiciones de transacciones europeas al sector financiero ruso, y otras medidas relacionadas con las criptomonedas....", "url": "https://www.publico.es/internacional/ue-acuerda-nuevo-paquete-sanciones-rusia-extiende-tope-precio-petroleo.html", "source": "Público", "publishedAt": "2026-07-23T09:53:41Z"}, {"title": "Bitcoin hoy: precio, cotización y variación del mercado al 23 de julio", "description": "Con un precio de US$65.767 y una variación diaria del 0,87%, el activo refleja el movimiento típico de un mercado volátil - LA NACION", "url": "https://www.lanacion.com.ar/economia/IA/bitcoin-hoy-precio-cotizacion-y-variacion-del-mercado-al-23-de-julio-nid23072026/", "source": "La Nacion", "publishedAt": "2026-07-23T04:00:43Z"}, {"title": "Criptomonedas hoy: cotización de las principales divisas digitales al 23 de julio", "description": "Bitcoin cotiza a US$65.767 y Ethereum a US$1.926,53, una variación de 0,87% y 0,34% en las últimas 24 horas, respectivamente - LA NACION", "url": "https://www.lanacion.com.ar/economia/IA/criptomonedas-hoy-cotizacion-de-las-principales-divisas-digitales-al-23-de-julio-nid23072026/", "source": "La Nacion", "publishedAt": "2026-07-23T04:00:19Z"}, {"title": "Ethereum hoy: la cotización al 23 de julio", "description": "La criptomoneda cotiza a US$1.926,53; este precio muestra una variación del 0,34% del valor de las últimas 24 horas - LA NACION", "url": "https://www.lanacion.com.ar/economia/IA/ethereum-hoy-la-cotizacion-al-23-de-julio-nid23072026/", "source": "La Nacion", "publishedAt": "2026-07-23T04:00:15Z"}]}, "medicina": {"label": "Medicina", "articles": []}}}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('datos-noticias').textContent);
+const UNI_KEYS = ['inversion','negocios','tecnologia','geopolitica','cripto','medicina'];
+const FAV_KEY = 'uni_favoritos';
+
+let vista = 'inicio';
+let subcategoria = 'todas';
+let filtro = '';
+
+function leerFavoritos() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
+  catch { return []; }
+}
+function guardarFavoritos(favs) {
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+}
+function esFavorito(url) {
+  return leerFavoritos().some(f => f.url === url);
+}
+function toggleFavorito(articulo) {
+  let favs = leerFavoritos();
+  if (esFavorito(articulo.url)) {
+    favs = favs.filter(f => f.url !== articulo.url);
+  } else {
+    favs.push(articulo);
+  }
+  guardarFavoritos(favs);
+  render();
+}
+
+function formatearFecha(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function construirTabs() {
+  const tabs = document.getElementById('mainTabs');
+  const items = [
+    { id: 'inicio', label: 'Inicio' },
+    { id: 'uni', label: 'UNI' },
+    { id: 'favoritos', label: 'Guardadas' },
+  ];
+  tabs.innerHTML = '';
+  items.forEach(it => {
+    const btn = document.createElement('button');
+    btn.textContent = it.label;
+    btn.className = vista === it.id ? 'active' : '';
+    btn.onclick = () => { vista = it.id; subcategoria = 'todas'; render(); };
+    tabs.appendChild(btn);
+  });
+}
+
+function construirSubchips() {
+  const cont = document.getElementById('subchips');
+  cont.innerHTML = '';
+  if (vista !== 'uni') { cont.classList.remove('visible'); return; }
+  cont.classList.add('visible');
+
+  const todasBtn = document.createElement('button');
+  todasBtn.textContent = 'Todas';
+  todasBtn.className = subcategoria === 'todas' ? 'active' : '';
+  todasBtn.onclick = () => { subcategoria = 'todas'; render(); };
+  cont.appendChild(todasBtn);
+
+  UNI_KEYS.forEach(k => {
+    const btn = document.createElement('button');
+    btn.textContent = DATA.categorias[k].label;
+    btn.className = subcategoria === k ? 'active' : '';
+    btn.onclick = () => { subcategoria = k; render(); };
+    cont.appendChild(btn);
+  });
+}
+
+function tarjeta(a) {
+  const fav = esFavorito(a.url);
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.innerHTML = `
+    <div class="cat-tag">${a._catLabel || ''}</div>
+    <h3><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a></h3>
+    <p class="desc">${a.description || ''}</p>
+    <div class="meta-row">
+      <span>${a.source} · ${formatearFecha(a.publishedAt)}</span>
+      <div class="actions">
+        <button class="fav-btn ${fav ? 'on' : ''}">${fav ? '★ Guardada' : '☆ Guardar'}</button>
+      </div>
+    </div>
+  `;
+  div.querySelector('.fav-btn').onclick = () => toggleFavorito(a);
+  return div;
+}
+
+function seccion(titulo, articulos) {
+  const wrap = document.createElement('div');
+  const h = document.createElement('div');
+  h.className = 'section-title';
+  h.innerHTML = `${titulo} <span class="count">${articulos.length}</span>`;
+  wrap.appendChild(h);
+
+  if (articulos.length === 0) {
+    const vacio = document.createElement('div');
+    vacio.className = 'empty-state';
+    vacio.textContent = 'No hay noticias que mostrar aquí.';
+    wrap.appendChild(vacio);
+    return wrap;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  articulos.forEach(a => grid.appendChild(tarjeta(a)));
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function aplicarFiltro(lista) {
+  if (!filtro.trim()) return lista;
+  const f = filtro.trim().toLowerCase();
+  return lista.filter(a =>
+    (a.title || '').toLowerCase().includes(f) ||
+    (a.description || '').toLowerCase().includes(f) ||
+    (a.source || '').toLowerCase().includes(f)
+  );
+}
+
+function render() {
+  construirTabs();
+  construirSubchips();
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  if (vista === 'inicio') {
+    const arts = DATA.categorias['inicio'].articles.map(a => ({ ...a, _catLabel: 'Inicio' }));
+    main.appendChild(seccion('Últimas noticias', aplicarFiltro(arts)));
+  } else if (vista === 'uni') {
+    if (subcategoria === 'todas') {
+      UNI_KEYS.forEach(k => {
+        const arts = DATA.categorias[k].articles.map(a => ({ ...a, _catLabel: DATA.categorias[k].label }));
+        main.appendChild(seccion(DATA.categorias[k].label, aplicarFiltro(arts)));
+      });
+    } else {
+      const arts = DATA.categorias[subcategoria].articles.map(a => ({ ...a, _catLabel: DATA.categorias[subcategoria].label }));
+      main.appendChild(seccion(DATA.categorias[subcategoria].label, aplicarFiltro(arts)));
+    }
+  } else if (vista === 'favoritos') {
+    main.appendChild(seccion('Tus noticias guardadas', aplicarFiltro(leerFavoritos())));
+  }
+}
+
+document.getElementById('buscador').addEventListener('input', (e) => {
+  filtro = e.target.value;
+  render();
+});
+
+const tickerItems = UNI_KEYS.map(k => DATA.categorias[k].label);
+document.getElementById('tickerText').innerHTML =
+  (tickerItems.concat(tickerItems)).map(t => `<span><span class="dot">●</span> ${t}</span>`).join('');
+
+render();
+</script>
+</body>
+</html>
