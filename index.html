@@ -5,17 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UNI — Noticias</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0E1116;
-  --surface: #161B22;
-  --surface-2: #1D232C;
-  --ink: #E8E6E1;
-  --muted: #8B93A1;
-  --gold: #C9A227;
-  --teal: #2FA8A0;
-  --rule: #262B33;
+  --bg: #F2F2F0;
+  --surface: #FFFFFF;
+  --ink: #17171A;
+  --ink-soft: #2B2B30;
+  --muted: #75757D;
+  --border: #E2E2E0;
+  --accent-soft: #EAEAE8;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -24,197 +23,278 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: 'Inter', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; }
+button { font-family: inherit; }
 
-.ticker-wrap {
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--rule);
-  overflow: hidden;
-  white-space: nowrap;
-  padding: 7px 0;
-}
-.ticker {
-  display: inline-block;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  animation: scroll-left 32s linear infinite;
-}
-.ticker span { margin-right: 40px; }
-.ticker .dot { color: var(--gold); }
-@keyframes scroll-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .ticker { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
+/* ---------- Masthead ---------- */
 header {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: rgba(14,17,22,0.92);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--rule);
+  z-index: 20;
+  background: rgba(242,242,240,0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
 }
-.header-inner {
-  max-width: 980px;
+.masthead {
+  max-width: 720px;
   margin: 0 auto;
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
+  padding: 26px 20px 10px;
+  text-align: center;
 }
-.brand {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-family: 'Space Grotesk', sans-serif;
+.masthead .logo {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+  animation: caer 0.6s ease;
 }
-.brand .mark {
-  font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: 1px;
-  background: linear-gradient(120deg, var(--gold), var(--teal));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.brand .sub {
-  font-size: 0.75rem;
+.masthead .tagline {
+  font-size: 0.78rem;
   color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
+  margin: 4px 0 18px;
 }
-nav.tabs {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-nav.tabs button {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--muted);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 7px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-nav.tabs button:hover { color: var(--ink); border-color: var(--rule); }
-nav.tabs button.active {
-  color: var(--bg);
-  background: var(--gold);
+@keyframes caer {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.search-row {
-  max-width: 980px;
-  margin: 20px auto 0;
+nav.tabs {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px;
+}
+nav.tabs .pill-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 999px;
+  background: var(--ink);
+  transition: left 0.35s cubic-bezier(0.65,0,0.35,1), width 0.35s cubic-bezier(0.65,0,0.35,1);
+  z-index: 0;
+}
+nav.tabs button {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  padding: 8px 17px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+nav.tabs button.active { color: #fff; }
+nav.tabs button:hover:not(.active) { color: var(--ink); }
+
+.search-wrap {
+  max-width: 720px;
+  margin: 12px auto 0;
   padding: 0 20px;
   display: flex;
-  gap: 10px;
+  justify-content: center;
 }
-.search-row input {
-  flex: 1;
+.search-pill {
+  display: flex;
+  align-items: center;
   background: var(--surface);
-  border: 1px solid var(--rule);
-  color: var(--ink);
-  padding: 11px 16px;
-  border-radius: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  transition: box-shadow 0.25s ease;
 }
-.search-row input:focus {
+.search-pill.open { box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+.search-icon {
+  background: none;
+  border: none;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.search-icon svg { width: 16px; height: 16px; }
+.search-pill input {
+  border: none;
   outline: none;
-  border-color: var(--teal);
+  background: transparent;
+  font-size: 0.85rem;
+  width: 0;
+  padding: 0;
+  transition: width 0.3s ease, padding 0.3s ease;
+  color: var(--ink);
+}
+.search-pill.open input {
+  width: 220px;
+  padding: 9px 14px 9px 0;
 }
 
 .subchips {
-  max-width: 980px;
+  max-width: 720px;
   margin: 14px auto 0;
   padding: 0 20px;
   display: none;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.subchips::-webkit-scrollbar { display: none; }
 .subchips.visible { display: flex; }
 .subchips button {
+  flex-shrink: 0;
   background: var(--surface);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--border);
   color: var(--muted);
   font-size: 0.78rem;
-  font-family: 'JetBrains Mono', monospace;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 6px 13px;
+  border-radius: 999px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
-.subchips button.active {
-  border-color: var(--teal);
-  color: var(--teal);
-}
+.subchips button:hover { border-color: var(--ink); color: var(--ink); }
+.subchips button.active { border-color: var(--ink); color: #fff; background: var(--ink); }
 
+/* ---------- Main ---------- */
 main {
-  max-width: 980px;
-  margin: 24px auto 80px;
+  max-width: 860px;
+  margin: 30px auto 90px;
   padding: 0 20px;
 }
+
+/* Featured / hero */
+.hero {
+  perspective: 900px;
+  margin-bottom: 34px;
+}
+.hero-card {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 22px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out;
+  opacity: 0;
+  animation: entrarHero 0.6s ease forwards 0.1s;
+}
+@keyframes entrarHero {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #C9C9CC;
+  border: 1px solid #3A3A40;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+.hero-card h2 {
+  font-size: 1.6rem;
+  line-height: 1.3;
+  margin: 0 0 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.hero-card h2 a { text-decoration: none; color: #fff; }
+.hero-card h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.hero-card p {
+  color: #B9B9BE;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  max-width: 560px;
+}
+.hero-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: #9C9CA1;
+}
+
+/* Section titles */
 .section-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   margin: 30px 0 14px;
-  color: var(--ink);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .section-title .count {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   color: var(--muted);
   font-weight: 400;
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
 }
+
 .card {
   background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
   padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  gap: 9px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition-delay: var(--delay, 0s);
 }
-.card:hover { border-color: var(--teal); transform: translateY(-2px); }
+.card.visible { opacity: 1; transform: translateY(0); }
+.card:hover {
+  border-color: #CFCFCC;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+  transform: translateY(-3px);
+}
 .card .cat-tag {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--gold);
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  font-weight: 600;
 }
 .card h3 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   margin: 0;
 }
 .card h3 a { text-decoration: none; }
-.card h3 a:hover { color: var(--teal); }
+.card h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .card p.desc {
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   color: var(--muted);
   margin: 0;
   line-height: 1.5;
@@ -224,62 +304,68 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
+  font-size: 0.71rem;
   color: var(--muted);
-  margin-top: 4px;
+  margin-top: 2px;
   gap: 8px;
   flex-wrap: wrap;
 }
-.card .actions button {
-  background: var(--surface-2);
-  border: 1px solid var(--rule);
+
+.fav-btn {
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
   color: var(--muted);
-  font-size: 0.72rem;
-  padding: 5px 10px;
-  border-radius: 7px;
+  font-size: 0.73rem;
+  padding: 5px 11px;
+  border-radius: 999px;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
-.card .actions button:hover { color: var(--ink); border-color: var(--muted); }
-.card .actions button.on {
-  color: var(--gold);
-  border-color: var(--gold);
+.fav-btn:hover { border-color: var(--ink); color: var(--ink); }
+.fav-btn.on { color: #fff; background: var(--ink); border-color: var(--ink); }
+.fav-btn .star {
+  display: inline-block;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
 }
+.fav-btn.pop .star { transform: rotate(-25deg) scale(1.35); }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 50px 20px;
   color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+  opacity: 0;
+  animation: entrarHero 0.4s ease forwards;
 }
 
 footer {
   text-align: center;
   padding: 30px 20px 50px;
   color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
 }
 </style>
 </head>
 <body>
 
-<div class="ticker-wrap">
-  <div class="ticker" id="tickerText"></div>
-</div>
-
 <header>
-  <div class="header-inner">
-    <div class="brand">
-      <span class="mark">UNI</span>
-      <span class="sub">actualizado 04/08/2026 16:21 UTC</span>
-    </div>
-    <nav class="tabs" id="mainTabs"></nav>
+  <div class="masthead">
+    <h1 class="logo">UNI</h1>
+    <p class="tagline">actualizado 05/08/2026 07:49 UTC</p>
+    <nav class="tabs" id="mainTabs">
+      <div class="pill-indicator" id="pillIndicator"></div>
+    </nav>
   </div>
-  <div class="search-row">
-    <input type="text" id="buscador" placeholder="Buscar noticias por palabra clave...">
+  <div class="search-wrap">
+    <div class="search-pill" id="searchPill">
+      <button class="search-icon" id="searchIcon" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <input type="text" id="buscador" placeholder="Buscar por palabra clave...">
+    </div>
   </div>
   <div class="subchips" id="subchips"></div>
 </header>
@@ -288,7 +374,7 @@ footer {
 
 <footer>UNI · fuente: GNews API · generado automáticamente cada día</footer>
 
-<script id="datos-noticias" type="application/json">{"generated_at": "2026-08-04T16:21:16.595623+00:00", "categorias": {"inicio": {"label": "Inicio", "articles": [{"title": "Encontraron en Brasil a Micaela Albornoz, la rosarina buscada desde hace más de un mes", "description": "La mujer, de 32 años, había desaparecido el pasado 24 de junio. Su búsqueda motivó una recompensa millonaria para obtener información sobre su paradero. Fue identificada en Florianópolis mediante el cotejo de huellas dactilares después de presentar un documento perteneciente a otra persona.", "url": "https://www.clarin.com/sociedad/encontraron-brasil-micaela-albornoz-rosarina-buscada-hace-mes_0_aUTq6xSfmK.html", "source": "clarin.com", "publishedAt": "2026-08-04T04:20:03Z"}, {"title": "¿Hicieron trampa como en la UNAM? Exponen irregularidades en examen para maestros de la USICAMM", "description": "USICAMM se suma a los reportes de trampas en su examen de maestros para la promoción horizontal.", "url": "https://www.elfinanciero.com.mx/nacional/2026/08/03/hicieron-trampa-como-en-la-unam-exponen-irregularidades-en-examen-para-maestros-de-la-usicamm/", "source": "El Financiero", "publishedAt": "2026-08-04T04:20:00Z"}, {"title": "Precio del dólar en Perú del lunes 3 de agosto: cuál fue el cierre del tipo de cambio", "description": "Precio del dólar hoy EN VIVO: cotización en compra y venta del dólar en el Perú en la jornada de hoy, lunes 3 de agosto. Revisa los movimientos de la moneda estadounidense en el mercado nacional.", "url": "https://elcomercio.pe/economia/mercados/precio-del-dolar-en-peru-2026-cierre-del-tipo-de-cambio-del-lunes-3-de-agosto-de-2026-tasa-cotizacion-compra-y-venta-segun-bcrp-dolares-a-soles-sbs-ocona-lbposting-noticia/", "source": "El Comercio Perú", "publishedAt": "2026-08-04T04:17:15Z"}, {"title": "Perseidas en Colombia: 3 zonas recomendadas por expertos para ver el espectáculo astronómico", "description": "Tres destinos del país ofrecen condiciones ideales para observar las Perseidas.", "url": "https://www.semana.com/tecnologia/articulo/perseidas-en-colombia-3-zonas-recomendadas-por-expertos-para-ver-el-espectaculo-astronomico/202627/", "source": "semana.com", "publishedAt": "2026-08-04T04:16:05Z"}, {"title": "Seguridad en Jalisco: reportan explosión en Lomas de Tlaquepaque con combustible involucrado", "description": "La onda sonora del estallido se escuchó a varios metros a la redonda y alertó a los vecinos", "url": "https://www.informador.mx/jalisco/seguridad-en-jalisco-reportan-explosion-en-lomas-de-tlaquepaque-con-combustible-involucrado-20260803-0193.html", "source": "El Informador", "publishedAt": "2026-08-04T04:07:41Z"}, {"title": "Naldy Saldaña denuncia a excompañero de La Bella Luz por presuntos tocamientos indebidos e intento de besarla", "description": "La cantante presentó una denuncia respaldada con documentos y registros de cámaras de seguridad de la presunta agresión por parte de un excompañero de La Bella Luz.", "url": "https://larepublica.pe/espectaculos/2026/08/03/naldy-saldana-denuncia-a-excompanero-de-la-bella-luz-por-presuntos-tocamientos-indebidos-e-intento-de-besarla-92370", "source": "La República", "publishedAt": "2026-08-04T04:05:17Z"}, {"title": "¿Tienes familiares con diabetes? La tecnología puede ayudarte a identificar factores de riesgo tempranos", "description": "Business Empresarial.- La diabetes suele aparecer de forma silenciosa. Muchas personas descubren que", "url": "https://www.businessempresarial.com.pe/tienes-familiares-con-diabetes-la-tecnologia-puede-ayudarte-a-identificar-factores-de-riesgo-tempranos/", "source": "Business Empresarial", "publishedAt": "2026-08-04T04:04:06Z"}, {"title": "Tragedia en Nasca: MTC convocó a organismos de Italia, España y Alemania para investigar el accidente aéreo", "description": "La Comisión de Investigación de Accidentes Aéreos (CIAA) ha notificado también a los fabricantes de la aeronave y del motor para que brinden apoyo técnico especializado durante las indagaciones.", "url": "https://rpp.pe/peru/actualidad/tragedia-en-nasca-mtc-convoco-a-organismos-de-italia-espana-y-alemania-para-investigar-el-accidente-aereo-noticia-1700003", "source": "RPP Noticias", "publishedAt": "2026-08-04T04:02:41Z"}]}, "inversion": {"label": "Inversión", "articles": []}, "negocios": {"label": "Negocios", "articles": []}, "tecnologia": {"label": "Tecnología", "articles": []}, "geopolitica": {"label": "Política internacional", "articles": []}, "cripto": {"label": "Cripto", "articles": [{"title": "“No pensé que yo pudiera caer”: el auge de las falsas ofertas laborales que se difunden por WhatsApp y otras redes de mensajería", "description": "Las ofertas de trabajo remoto se han convertido en el nuevo anzuelo del cibercrimen a través de redes organizadas que mezclan ingeniería social, criptomonedas y suplantación de empresas reales para vaciar cuentas y desaparecer sin dejar rastro", "url": "https://elpais.com/tecnologia/2026-08-04/no-pense-que-yo-pudiera-caer-el-auge-de-las-falsas-ofertas-laborales-que-se-difunden-por-whatsapp-y-otras-redes-de-mensajeria.html", "source": "El País", "publishedAt": "2026-08-04T03:30:01Z"}, {"title": "Agente del FBI es acusado de robar casi 1 millón de dólares en criptomonedas", "description": "Agente del FBI es acusado de robar cerca de un millón de dólares en criptomonedas obtenidas durante una investigación federal | N+ Univision Justicia | Univision", "url": "https://www.univision.com/noticias/justicia/agente-del-fbi-es-acusado-de-robar-casi-1-millon-de-dolares-en-criptomonedas", "source": "Univision Noticias", "publishedAt": "2026-08-04T03:21:58Z"}, {"title": "Precio de ethereum, bitcoin y otras principales criptomonedas para este lunes 3 de agosto", "description": "Las criptomonedas han tenido un auge recientemente y el bitcoin ha logrado su legalidad en El Salvador", "url": "https://www.infobae.com/tecno/2026/08/03/precio-de-ethereum-bitcoin-y-otras-principales-criptomonedas-para-este-lunes-3-de-agosto/", "source": "infobae", "publishedAt": "2026-08-03T11:32:05Z"}, {"title": "Cometer o forzar a otros a cometer delitos cibernéticos será pagado con pena de muerte en este país", "description": "Las víctimas de estas redes son abordadas con falsas promesas de inversión en criptomonedas o engaños de personas que dicen estar en busca de una relación ...", "url": "https://www.noticiasrcn.com/internacional/pais-donde-delitos-ciberneticos-se-pagan-con-pena-de-muerte-1045735", "source": "Noticias RCN", "publishedAt": "2026-08-03T02:27:03Z"}, {"title": "‘En Colombia las ‘Stablecoins’ ligadas al dólar dominan el mercado de las criptomonedas’", "description": "En el país hay cinco  millones de personas con recursos en este tipo de activos. Ya hay algunas normas.", "url": "https://www.portafolio.co/tecnologia/en-colombia-las-stablecoins-ligadas-al-dolar-dominan-el-mercado-de-las-criptomonedas-499462", "source": "Portafolio", "publishedAt": "2026-08-02T21:51:40Z"}, {"title": "errores con criptomonedas que generan sanciones", "description": "Expertos advierten que varias operaciones con activos digitales pueden generar efectos tributarios.", "url": "https://www.portafolio.co/economia/impuestos/declaracion-de-renta-2025-los-cinco-errores-con-criptomonedas-que-podrian-generar-sanciones-499530", "source": "Portafolio", "publishedAt": "2026-08-02T16:41:18Z"}, {"title": "Caída del bitcoin: Strategy evalúa vender miles de millones y la criptomoneda toca su nivel más bajo en semanas", "description": "El mayor inversor institucional en la moneda digital analiza desprenderse de parte de su posición para reforzar liquidez tras ingresos trimestrales por debajo de lo esperado", "url": "https://www.infobae.com/tecno/2026/08/02/caida-del-bitcoin-strategy-evalua-vender-miles-de-millones-y-la-criptomoneda-toca-su-nivel-mas-bajo-en-semanas/", "source": "infobae", "publishedAt": "2026-08-02T14:09:37Z"}, {"title": "Paso a paso para invertir en criptomonedas y cuál es su valor este domingo 2 de agosto", "description": "Lass criptomonedas han tenido diversos movimientos en las últimas horas", "url": "https://www.infobae.com/tecno/2026/08/02/paso-a-paso-para-invertir-en-criptomonedas-y-cual-es-su-valor-este-domingo-2-de-agosto/", "source": "infobae", "publishedAt": "2026-08-02T11:30:57Z"}]}, "medicina": {"label": "Medicina", "articles": []}}}</script>
+<script id="datos-noticias" type="application/json">{"generated_at": "2026-08-05T07:49:21.010237+00:00", "categorias": {"inicio": {"label": "Inicio", "articles": [{"title": "Detienen a sospechoso de causar uno de los tres incendios forestales que arrasan la zona de Spokane, en Washington", "description": "Un hombre fue detenido como sospechoso de provocar intencionalmente uno de los tres incendios forestales que arrasan el este del estado de Washington, informaron las autoridades, mientras los bomberos trabajan contrarreloj para contener las llamas antes de que destruyan más viviendas.", "url": "https://cnnespanol.cnn.com/2026/08/04/eeuu/hombre-incendios-spokane-bomberos-trax", "source": "cnnespanol.cnn.com", "publishedAt": "2026-08-04T19:48:00Z"}, {"title": "Renovación Popular presenta denuncia contra Julián Pérez Mallqui por falta ética", "description": "Si bien la Comisión de Ética aún no está instalada, el caso se presentó ante la Mesa de Partes del Congreso y será derivado a dicho grupo de trabajo una vez que se instale. Además, Ernesto Zunini, diputado de Juntos por el Perú, señaló que desde su bancada ya se ha solicitado la suspensión de diputado.", "url": "https://larepublica.pe/politica/2026/08/04/juntos-por-el-peru-pide-suspender-por-120-dias-al-congresista-perez-malqui-hnews-158692", "source": "La República", "publishedAt": "2026-08-04T19:47:42Z"}, {"title": "Janet Tello reprocha prácticas fujimoristas: \"Pierden un proceso y crean campañas de desprestigio\"", "description": "La presidenta del Poder Judicial resaltó que ello afecta la democracia y daña la autoridades de los jueces y juezas.", "url": "https://larepublica.pe/politica/2026/08/04/janet-tello-reprocha-practicas-fujimoristas-pierden-un-proceso-y-crean-campanas-de-desprestigio-hnews-148992", "source": "La República", "publishedAt": "2026-08-04T19:46:49Z"}, {"title": "Todd Blanche supera una votación clave y queda a un paso de ser confirmado como fiscal general", "description": "Su nominación superó una votación de 12 a 10 y quedó listo para llegar al pleno esta semana, tras un entendimiento con dos legisladores republicanos", "url": "https://www.infobae.com/estados-unidos/2026/08/04/todd-blanche-supera-una-votacion-clave-y-queda-a-un-paso-de-ser-confirmado-como-fiscal-general/", "source": "Infobae", "publishedAt": "2026-08-04T19:46:13Z"}, {"title": "Congreso bicameral definió número de integrantes de sus comisiones: así estarán conformados los grupos de trabajo", "description": "Las juntas de portavoces de las cámaras de senadores y diputados tuvieron sendas reuniones este martes, en las que se determinó el número de integrantes de las comisiones ordinarias, no legislativas y comisiones de ética.", "url": "https://rpp.pe/politica/congreso/congreso-bicameral-definio-numero-de-integrantes-de-sus-comisiones-asi-estaran-conformados-los-grupos-de-trabajo-noticia-1700087", "source": "RPP Noticias", "publishedAt": "2026-08-04T19:45:43Z"}, {"title": "La Bonoloto: comprobar resultado y premios del sorteo del martes 4 de agosto de 2026", "description": "La combinación ganadora del sorteo de la Bonoloto de hoy, martes 4 de agosto de 2026, ya se ha dado a conocer. Estos han sido los números: 7, 10, 30, 37, 43 y 46, el reintegro 4...", "url": "https://www.elmundo.es/loterias/2026/08/04/6a724143e9cf4a5d0e8b4591.html", "source": "El Mundo", "publishedAt": "2026-08-04T19:45:16Z"}, {"title": "Jordania acusa \"chantaje\" de Infantino durante Mundial y también retira apoyo a reelección", "description": "El presidente de la Asociación de Fútbol de Jordania (AFJ), el príncipe Ali bin Al Hussein, acusó este martes a...", "url": "https://www.biobiochile.cl/noticias/deportes/futbol-internacional/notas-futbol-internacional/2026/08/04/jordania-acusa-chantaje-de-infantino-durante-mundial-y-tambien-retira-apoyo-a-reeleccion.shtml", "source": "BioBioChile", "publishedAt": "2026-08-04T19:44:12Z"}, {"title": "Polémicos participantes intentan conquistar a Ludmila Ksenofontova: \"Cada día se aleja más de Rusia y se acerca más al Amazonas\"", "description": "Este es el participante que estaría pronto por caer a los pies de Ludmila Ksenofontova. Aquí todos los detalles.", "url": "https://www.fmdos.cl/noticias/polemicos-participantes-intentan-conquistar-a-ludmila-ksenofontova-cada-dia-se-aleja-mas-de-rusia-y-se-acerca-mas-al-amazonas/", "source": "FMDOS", "publishedAt": "2026-08-04T19:41:54Z"}]}, "inversion": {"label": "Inversión", "articles": [{"title": "Warren Buffett atribuye su éxito financiero a la suerte y no solo a su talento inversor", "description": "Nueva York, 4 agosto 2026.- El legendario inversor Warren Buffett aseguró que gran parte de su extraordinaria trayectoria en los mercados financieros fue resultado de la suerte, además de su capacidad para analizar negocios e invertir durante décadas. El presidente de Berkshire Hathaway afirmó que, con una fortuna estimada en unos 147.000 millones de dólares, Warren Buffett afirma que su éxito como inversor fue producto de la suerte además de su talento y prepara la distribución de casi toda su fortuna mediante filantropía.", "url": "https://hispanicpost.com/2026/08/04/warren-buffett-atribuye-su-exito-financiero-a-la-suerte-y-no-solo-a-su-talento-inversor/", "source": "Hispanic Post", "publishedAt": "2026-08-04T14:15:12Z"}, {"title": "67 años, pensiones fijas de 1.580 al mes y una gran importancia de las inversiones: Así funciona la jubilación en Países Bajos", "description": "Considerado como uno de los mejores sistema de pensiones en el mundo, el modelo neerlandés combina prestaciones fijas y fondos privados con opción a invertir en mercados financieros", "url": "https://www.elperiodico.com/es/economia/20260804/jubilacion-paises-bajos-67-anos-pensiones-fijas-fondos-privados-inversion-dv-131153719", "source": "El Periódico de España", "publishedAt": "2026-08-04T07:30:00Z"}, {"title": "Bolsa e Ibex 35 hoy, en directo | El Ibex buscará asaltar los 20.000 puntos por primera vez en su historia", "description": "Sigue en directo toda la información de los mercados, Wall Street y el Ibex 35, con las novedades sobre el índice bursátil en España", "url": "https://www.elconfidencial.com/mercados/2026-08-04/bolsa-e-ibex-35-hoy-en-directo_4400519/", "source": "El Confidencial", "publishedAt": "2026-08-04T06:20:00Z"}, {"title": "Mercados: con el petróleo en baja, sube la Bolsa en Wall Street y cae el riesgo país argentino", "description": "El barril de crudo cae 6% y los indicadores de Nueva York rebotan hasta 1,5%. Los títulos públicos ganan 0,4% y el indicador de JP Morgan cede a 420 puntos. El S&P Merval baja 0,2% y los ADR cotizan dispares", "url": "https://www.infobae.com/economia/2026/08/03/mercados-con-el-petroleo-en-baja-sube-la-bolsa-en-wall-street-y-cae-el-riesgo-pais-argentino/", "source": "infobae", "publishedAt": "2026-08-03T15:02:52Z"}, {"title": "Bolsa e Ibex 35 hoy, en directo | El Ibex buscará los 19.900 y el petróleo se desploma un 5% tras cancelar Trump el gran ataque contra Irán", "description": "Sigue en directo toda la información de los mercados, Wall Street y el Ibex 35, con las novedades sobre el índice bursátil en España", "url": "https://www.elconfidencial.com/mercados/2026-08-03/bolsa-e-ibex-35-hoy-en-directo_4399907/", "source": "El Confidencial", "publishedAt": "2026-08-03T06:15:00Z"}, {"title": "Las Siete Magníficas no han muerto. Lo que ha muerto es la forma de mirarlas", "description": "En los mercados existe una vieja costumbre que se repite generación tras generación. Cuando un grupo de compañías deja de liderar la bolsa durante unos meses, enseguida aparecen quienes anuncian el final de una era.", "url": "https://www.elespanol.com/invertia/opinion/20260803/magnificas-no-muerto-forma-mirarlas/1003744342022_12.html", "source": "El Español", "publishedAt": "2026-08-03T05:22:44Z"}, {"title": "Banrepública comprará dólares hasta por USD4.000 millones por fuerte caída de la divisa estadounidense", "description": "Dice el Emisor que las reservas internacionales constituyen un respaldo para que el país pueda atender sus obligaciones externas y responder ante posibles choques provenientes de los mercados financieros internacionales.", "url": "https://www.elheraldo.co/economia/2026/07/31/banrepublica-comprara-dolares-hasta-por-usd4000-millones-por-fuerte-caida-de-la-divisa-estadounidense/", "source": "ELHERALDO.CO", "publishedAt": "2026-07-31T20:10:20Z"}, {"title": "Bolsa e Ibex 35 hoy, en directo | El Ibex viene en verde y roza los 19.900 puntos en otra tanda de resultados, con el petróleo a la baja", "description": "Sigue en directo toda la información de los mercados, Wall Street y el Ibex 35, con las novedades sobre el índice bursátil en España", "url": "https://www.elconfidencial.com/mercados/2026-07-31/bolsa-e-ibex-35-hoy-en-directo_4398807/", "source": "El Confidencial", "publishedAt": "2026-07-31T06:20:00Z"}]}, "negocios": {"label": "Negocios", "articles": [{"title": "Por precio, consumidores prefieren bebidas en envases pequeños: Anpec; podrían subir precios de lácteos y embutidos, prevé", "description": "Las empresas buscan ofrecer presentaciones que se mantengan en niveles de precios que se puedan vender", "url": "https://www.eluniversal.com.mx/cartera/por-precio-consumidores-prefieren-bebidas-en-envases-pequenos-anpec-podrian-subir-precios-de-lacteos-y-embutidos-preve/", "source": "El Universal", "publishedAt": "2026-08-04T19:20:44Z"}, {"title": "Sheinbaum da el primer paso de su reingeniería anticorrupción con un decreto que blinda la transparencia", "description": "El Gobierno obligará a ampliar la publicidad de contratos, auditorías y empresas públicas, mientras allana el camino para un paquete de reformas que desmonta el actual sistema anticorrupción y llegará al Congreso en septiembre", "url": "https://elpais.com/mexico/2026-08-04/sheinbaum-da-el-primer-paso-de-su-reingenieria-anticorrupcion-con-un-decreto-que-blinda-la-transparencia.html", "source": "El País", "publishedAt": "2026-08-04T19:11:48Z"}, {"title": "Oro ilegal en Colombia ya iguala las exportaciones de café: mueve US$3.500 millones al año", "description": "Lejos de los reflectores que suelen concentrarse en el narcotráfico, el oro ilegal se ha consolidado como uno de los negocios criminales más rentables...", "url": "https://www.elcolombiano.com/negocios/oro-ilegal-cuanto-mueve-economia-colombia-eafit-DH39584214", "source": "El Colombiano", "publishedAt": "2026-08-04T19:04:36Z"}, {"title": "Llamadas de estafas y de ventas se acabarían con normativa que fue reglamentada", "description": "La Comisión de Regulación de Comunicaciones empezó normativa para que las empresas identifiquen a los números de estafas y publicidades.", "url": "https://www.pulzo.com/tecnologia/llamadas-estafas-ventas-se-acabarian-con-normativa-que-fue-reglamentada-PP5263978A", "source": "Pulzo", "publishedAt": "2026-08-04T18:56:34Z"}, {"title": "Expopet 2026: ¿cómo ha crecido el mercado de productos, bienes y servicios para mascotas en el país?", "description": "Para esta edición se reunirá a empresas, emprendimientos, organizaciones y profesionales del sector que prestarán productos, servicios y soluciones en pro ...", "url": "https://www.noticiasrcn.com/economia/cual-es-el-impacto-economico-para-los-empresarios-dentro-de-expopet-1046909", "source": "Noticias RCN", "publishedAt": "2026-08-04T18:52:37Z"}, {"title": "México apuesta por la economía circular: esta es la estrategia que busca transformar los residuos en recursos", "description": "Los primeros debates sobre este modelo sustentable se remontan a las décadas de los setenta y ochenta", "url": "https://www.infobae.com/mexico/2026/08/04/mexico-apuesta-por-la-economia-circular-esta-es-la-estrategia-busca-transformar-los-residuos-en-recursos/", "source": "infobae", "publishedAt": "2026-08-04T18:45:33Z"}, {"title": "Qué medidas puede tomar España contra Marruecos", "description": "Desde la entrega del Sáhara por parte de España a Marruecos y a Mauritania (que luego se retiró del tercio del territorio que ocupaba), el argumento que empleaba el lobby promarroquí para justificar las cesiones a Rabat y la inmovilidad ante cualquier ofensa o maniobra hostil era el «colchón de intereses». Cuantos más negocios tuvieran … Continuar leyendo \"Qué medidas puede tomar España contra Marruecos\"", "url": "https://okdiario.com/opinion/que-medidas-puede-tomar-espana-contra-marruecos-19113414", "source": "OK Diario", "publishedAt": "2026-08-04T18:42:00Z"}, {"title": "La dura advertencia de la cámara de kioscos por ola de cierres: \"Podemos desaparecer como los almacenes de los 90\"", "description": "Miles de pequeños negocios enfrentan un escenario de supervivencia cada vez más difícil, mientras la competencia y el consumo redefinen el futuro del rubro", "url": "https://www.infobae.com/economia/2026/08/04/la-dura-advertencia-de-la-camara-de-kioscos-por-ola-de-cierres-podemos-desaparecer-como-los-almacenes-de-los-90/", "source": "infobae", "publishedAt": "2026-08-04T18:35:14Z"}]}, "tecnologia": {"label": "Tecnología", "articles": [{"title": "Pablo Carreno Busta 1 - 2 Valentin Royer: resumen y estadísticas del partido de National Bank Open (ATP)", "description": "***Inicio de texto generado mediante inteligencia artificial***El tenista francés Valentin Royer ha...", "url": "https://www.europapress.es/deportes/estadisticas-deportivas/noticia-pablo-carreno-busta-valentin-royer-resumen-estadisticas-partido-national-bank-open-atp-20260804211944.html", "source": "Europa Press", "publishedAt": "2026-08-04T19:19:44Z"}, {"title": "Jóvenes presentan síntomas graves de depresión, ansiedad o estrés, revela encuesta; varios piden licencia médica por salud mental", "description": "Casi la mitad de los jóvenes recurre a herramientas de inteligencia artificial para buscar información, orientación o acompañamiento relacionado con su salud mental", "url": "https://www.eluniversal.com.mx/cartera/jovenes-presentan-sintomas-graves-de-depresion-ansiedad-o-estres-revela-encuesta-varios-piden-licencia-medica-por-salud-mental/", "source": "El Universal", "publishedAt": "2026-08-04T19:08:22Z"}, {"title": "El Gobierno vasco cierra el borrador de la ley de \"simplificación\" administrativa, pero con un informe jurídico crítico", "description": "El dictamen recoge que es un articulado muy genérico, pero el Ejecutivo defiende la importancia de una norma que reforzará la atención en euskera, que introduce la inteligencia artificial y que retocará un puñado de leyes ya en vigor", "url": "https://www.eldiario.es/euskadi/gobierno-vasco-cierra-borrador-ley-simplificacion-administrativa-informe-juridico-critico_1_13426611.html", "source": "eldiario.es", "publishedAt": "2026-08-04T19:05:14Z"}, {"title": "La avalancha de IA china crea una \"zona de muerte\" para Silicon Valley", "description": "El lanzamiento relámpago de 5 modelos en 8 semanas demuestra que los desarrolladores chinos se están acercando, e incluso superando en algunos casos, a los pioneros estadounidenses, considerados líderes en inteligencia artificial de vanguardia, indican expertos.", "url": "https://actualidad.rt.com/actualidad/620530-avalancha-ia-china-crea-zona-muerte", "source": "RT en Español", "publishedAt": "2026-08-04T18:36:46Z"}, {"title": "Sara Bejlek 0 - 2 Iga Swiatek: resumen y estadísticas del partido de National Bank Open (WTA)", "description": "***Inicio de texto generado mediante inteligencia artificial***La tenista polaca Iga Swiatek ha avanzado...", "url": "https://www.europapress.es/deportes/estadisticas-deportivas/noticia-sara-bejlek-iga-swiatek-resumen-estadisticas-partido-national-bank-open-wta-20260804202031.html", "source": "Europa Press", "publishedAt": "2026-08-04T18:20:31Z"}, {"title": "Elina Svitolina 2 - 1 Jessica Bouzas Maneiro: resumen y estadísticas del partido de National Bank Open (WTA)", "description": "***Inicio de texto generado mediante inteligencia artificial***La tenista ucraniana Elina Svitolina ha...", "url": "https://www.europapress.es/deportes/estadisticas-deportivas/noticia-elina-svitolina-jessica-bouzas-maneiro-resumen-estadisticas-partido-national-bank-open-wta-20260804200403.html", "source": "Europa Press", "publishedAt": "2026-08-04T18:04:03Z"}, {"title": "Europa busca competir en IA apoyándose en modelos especializados, aplicaciones industriales y datos de calidad", "description": "Europa está orientando su estrategia en inteligencia artificial (IA) hacia modelos especializados, aplicaciones industriales y datos de calidad, con el objetivo de reforzar su competitividad y reducir dependencias tecnológicas en un mercado global dominado por China y EEUU.", "url": "https://www.huelvainformacion.es/economia/europa-busca-competir-ia-apoyandose_0_2007655591.html", "source": "Huelva Información", "publishedAt": "2026-08-04T17:53:23Z"}, {"title": "Europa busca competir en IA apoyándose en modelos especializados, aplicaciones industriales y datos de calidad", "description": "Europa está orientando su estrategia en inteligencia artificial (IA) hacia modelos especializados, aplicaciones industriales y datos de calidad, con el objetivo de reforzar su competitividad y reducir dependencias tecnológicas en un mercado global dominado por China y EEUU.", "url": "https://www.malagahoy.es/economia/europa-busca-competir-ia-apoyandose_0_2007655592.html", "source": "Málaga Hoy", "publishedAt": "2026-08-04T17:53:23Z"}]}, "geopolitica": {"label": "Política internacional", "articles": [{"title": "Primer ministro palestino denuncia que crisis económica en Cisjordania es una ‘campaña política más amplia’ para debilitar las instituciones", "description": "Aseguró que el país responde con una estrategia centrada en movilizar apoyo internacional y rechazar “cualquier dictado político externo”.", "url": "https://www.eltiempo.com/mundo/medio-oriente/primer-ministro-palestino-denuncia-que-crisis-economica-en-cisjordania-es-una-campana-politica-mas-amplia-para-debilitar-las-instituciones-3576122", "source": "El Tiempo", "publishedAt": "2026-08-04T19:33:55Z"}, {"title": "Un suceso insólito y vergonzoso: descrédito internacional de Sánchez", "description": "El relato construido por el sanchismo para intentar salvar la cara es propio del guion de una película de política ficción", "url": "https://okdiario.com/opinion/suceso-insolito-vergonzoso-descredito-internacional-sanchez-19116370", "source": "OK Diario", "publishedAt": "2026-08-04T17:00:00Z"}, {"title": "La oposición nicaragüense en el exilio busca aumentar la presión internacional contra Ortega y abrir una transición política", "description": "Djenane Villanueva, CNN en Español El anuncio del presidente Daniel Ortega de que en Nicaragua no volverá a haber elecciones, lejos de sorprender a líderes opositores exiliados en Costa Rica, terminó por confirmar el desmantelamiento de la democracia que desde hace años denuncian. Para ellos, finalmente quedó atrás la intención del Gobierno nicaragüense de preservar", "url": "https://abc17news.com/cnn-spanish/2026/08/04/la-oposicion-nicaraguense-en-el-exilio-busca-aumentar-la-presion-internacional-contra-ortega-y-abrir-una-transicion-politica/", "source": "ABC17News.com", "publishedAt": "2026-08-04T14:08:23Z"}, {"title": "La oposición nicaragüense en el exilio busca aumentar la presión internacional contra Ortega y abrir una transición política", "description": "Los opositores creen que finalmente quedó atrás la intención del gobierno nicaragüense de preservar una apariencia democrática. Por eso, concentran sus esfuerzos.", "url": "https://cnnespanol.cnn.com/2026/08/04/latinoamerica/oposicion-nicaragua-exilio-busca-presion-internacional-orix", "source": "CNN en Español", "publishedAt": "2026-08-04T14:08:23Z"}, {"title": "Costa Rica vuelve a destacar entre los mejores destinos del mundo para jubilados, según Forbes", "description": "El país mantiene su atractivo internacional por su clima, sistema de salud, estabilidad política y costo de vida, aunque enfrenta retos relacionados con riesgos climáticos como las inundaciones.", "url": "https://www.infobae.com/costa-rica/2026/08/04/costa-rica-vuelve-a-destacar-entre-los-mejores-destinos-del-mundo-para-jubilados-segun-forbes/", "source": "infobae", "publishedAt": "2026-08-04T04:05:47Z"}, {"title": "El último viaje del presidente", "description": "El presidente saliente de Colombia fue a La Habana, en un gesto claro por reivindicar su política internacional progresista y soberana", "url": "https://www.las2orillas.co/el-ultimo-viaje-del-presidente/", "source": "Las2Orillas", "publishedAt": "2026-08-03T21:52:40Z"}, {"title": "Un experto en geopolítica carga contra la política europea en cuestiones migratorias: \"Está en manos de terceros países\"", "description": "El director del CIDOB puntualiza la migración masiva en Marruecos como \"una señal de debilidad\" del propio país y explica cómo está tratando la situación la UE", "url": "https://cadenaser.com/nacional/2026/08/03/un-experto-en-geopolitica-carga-contra-la-politica-europea-en-cuestiones-migratorias-esta-en-manos-de-terceros-paises-cadena-ser/", "source": "Cadena SER", "publishedAt": "2026-08-03T21:37:18Z"}, {"title": "Paloma Bravo: \"Los que mandan hoy en la política internacional serían los matones del colegio o los acomplejados que recibieron collejas y nos lo están haciendo pagar\"", "description": "La escritora publica 'Polis y cacos', una brillante y afilada novela sobre las heridas de la infancia, el clasismo, el acoso y esa generación que creyó que viviría mejor que sus padres", "url": "https://cadenaser.com/nacional/2026/08/03/paloma-bravo-los-que-mandan-hoy-en-la-politica-internacional-serian-los-matones-del-colegio-o-los-acomplejados-que-recibieron-collejas-y-nos-lo-estan-haciendo-pagar-cadena-ser/", "source": "Cadena SER", "publishedAt": "2026-08-03T03:00:00Z"}]}, "cripto": {"label": "Cripto", "articles": [{"title": "“No pensé que yo pudiera caer”: el auge de las falsas ofertas laborales que se difunden por WhatsApp y otras redes de mensajería", "description": "Las ofertas de trabajo remoto se han convertido en el nuevo anzuelo del cibercrimen a través de redes organizadas que mezclan ingeniería social, criptomonedas y suplantación de empresas reales para vaciar cuentas y desaparecer sin dejar rastro - LA NACION", "url": "https://www.lanacion.com.ar/sociedad/no-pense-que-yo-pudiera-caer-el-auge-de-las-falsas-ofertas-laborales-que-se-difunden-por-whatsapp-y-nid04082026/", "source": "La Nacion", "publishedAt": "2026-08-04T16:11:04Z"}, {"title": "Criptomonedas, fentanilo y caletas: así se movía por Melgar poderoso lavador de carteles mexicanos", "description": "Ya había sido detenido en Florida por llevar más de US $ 400 mil en un carro. Fue extraditado a EE. UU.", "url": "https://www.eltiempo.com/unidad-investigativa/criptomonedas-fentanilo-y-caletas-asi-se-movia-por-melgar-poderoso-lavador-de-carteles-mexicanos-3575241", "source": "El Tiempo", "publishedAt": "2026-08-04T15:19:35Z"}, {"title": "Hackers roban US$110 millones en bitcoin de billeteras consideradas seguras", "description": "En pocos días, más de 1755 bitcoins fueron retirados de unas 5000 billeteras, según Galaxy Research - LA NACION", "url": "https://www.lanacion.com.ar/economia/IA/hackers-roban-us110-millones-en-bitcoin-de-billeteras-consideradas-seguras-nid04082026/", "source": "La Nacion", "publishedAt": "2026-08-04T14:49:29Z"}, {"title": "Unos 'hackers' protagonizan un robo exprés al vaciar varias carteras de criptomonedas en 41 minutos y llevarse más de 60 millones de euros", "description": "Los detalles: Los ladrones aprovecharon un fallo en los llamados monederos fríos para poder acceder al dinero. Un agente del FBI se ha entregado por haber sustraído un millón de dólares con este método.", "url": "https://www.lasexta.com/noticias/ciencia-tecnologia/hackers-protagonizan-robo-expres-vaciar-varias-carteras-criptomonedas-41-minutos-llevarse-mas-60-millones-euros_202608046a71e8bda046ad6ebc9c1bb3.html", "source": "La Sexta Noticias", "publishedAt": "2026-08-04T13:29:49Z"}, {"title": "Precio de ethereum, bitcoin y otras principales criptomonedas para este martes 4 de agosto", "description": "Así se han movido las criptomonedas en las últimas horas", "url": "https://www.infobae.com/tecno/2026/08/04/precio-de-ethereum-bitcoin-y-otras-principales-criptomonedas-para-este-martes-4-de-agosto/", "source": "infobae", "publishedAt": "2026-08-04T11:30:55Z"}, {"title": "App de criptomonedas se jactan de tener más inversionistas que las de bolsa, ¿qué responden estas?", "description": "Una diferencia que refleja el potencial de crecimiento que aún tiene el mercado bursátil si logra ofrecer una experiencia de uso cotidiano.", "url": "https://gestion.pe/tu-dinero/app-de-criptomonedas-se-jactan-de-tener-mas-inversionistas-que-las-de-bolsa-que-responden-estas-noticia/", "source": "Diario Gestión", "publishedAt": "2026-08-04T10:10:00Z"}, {"title": "Cae CEO mexicano de una casa de cambio en EEUU: convirtió 750 mil dólares del narco en criptomonedas y luego pagó por un asesinato", "description": "El director ejecutivo de MoneyFlip LLC contrató a agentes federales encubiertos, creyendo que eran sicarios, para asesinar a un empresario mexicano por una deuda", "url": "https://www.infobae.com/mexico/2026/08/04/cae-ceo-mexicano-de-una-casa-de-cambio-en-eeuu-convirtio-750-mil-dolares-del-narco-en-criptomonedas-y-luego-pago-por-un-asesinato/", "source": "infobae", "publishedAt": "2026-08-04T09:47:21Z"}, {"title": "Exagente del FBI roba un millón de dólares en criptomonedas de cuentas asociadas a \"nación adversaria\"", "description": "Tras considerar que el FBI \"no podía o no quería actuar\" contra estas cuentas, el acusado decidió acceder a los sistemas internos de la agencia para obtener las claves y apropiarse del dinero.", "url": "https://actualidad.rt.com/actualidad/620506-exagente-fbi-robar-millon-criptomonedas-nacion-adversaria", "source": "RT en Español", "publishedAt": "2026-08-04T06:46:12Z"}]}, "medicina": {"label": "Medicina", "articles": [{"title": "Hacía dieta y ejercicio, pero subió 20 kilos: los médicos le dieron un devastador diagnóstico", "description": "El aumento repentino de peso escondía un problema de salud que alteró su metabolismo, descanso y calidad de vida durante años.", "url": "https://www.eltiempo.com/cultura/gente/hacia-dieta-y-ejercicio-pero-subio-20-kilos-los-medicos-le-dieron-un-devastador-diagnostico-3576099", "source": "El Tiempo", "publishedAt": "2026-08-04T18:17:23Z"}, {"title": "Indecopi ratifica multa de S/2 millones 475 mil contra Medifarma y ordena reparar a víctimas del suero defectuoso", "description": "Indecopi confirmó la sanción impuesta a la farmacéutica Medifarma por distribuir un lote de suero fisiológico que provocó la muerte de pacientes y graves afectaciones a la salud de otras personas. Además, ordenó que la empresa cubra los gastos médicos de los sobrevivientes y los costos de sepelio de las víctimas.", "url": "https://rpp.pe/economia/economia/indecopi-ratifica-multa-de-s-2-millones-475-mil-contra-medifarma-y-ordena-reparar-a-victimas-del-suero-defectuoso-noticia-1700083", "source": "RPP", "publishedAt": "2026-08-04T18:15:55Z"}, {"title": "denuncian un \"alarmante\" aumento del racismo en los hospitales de Gran Bretaña", "description": "Muchos pacientes no quieren ser atendidos por médicos o enfermeros africanos o asiáticos, según demostró una encuesta.El servicio de salud británico debió contratar mucho personal extranjero por falta de profesionales, especialmente durante la pandemia. Ahora sufren actos de xenofobia y racismo.", "url": "https://www.clarin.com/mundo/monos-sucios-denuncian-alarmante-aumento-racismo-hospitales-gran-bretana_0_LgVIziqJgG.html", "source": "Clarin", "publishedAt": "2026-08-04T18:00:03Z"}, {"title": "Preocupación por el estado de salud de Denisse González, ex Gran Hermano: “No es la noticia que esperábamos”", "description": "La joven influencer detalló las novedades luego de que los médicos detectaran una recaída en su cuadro", "url": "https://www.infobae.com/teleshow/2026/08/04/preocupacion-por-el-estado-de-salud-de-denisse-gonzalez-ex-gran-hermano-no-es-la-noticia-que-esperabamos/", "source": "infobae", "publishedAt": "2026-08-04T17:03:49Z"}, {"title": "Sismo 5.4 deja secuelas en niños, médicos detectan problemas respiratorios, digestivos y emocionales", "description": "Médicos del Instituto Nacional de Salud del Niño San Borja detectaron problemas respiratorios, digestivos y emocionales en menores", "url": "https://diariocorreo.pe/edicion/huancayo/sismo-54-deja-secuelas-en-ninos-medicos-detectan-problemas-respiratorios-digestivos-y-emocionales-noticia/", "source": "Diario Correo", "publishedAt": "2026-08-04T14:04:00Z"}, {"title": "El Rosario lanza posgrado en Medicina Familiar para descongestionar el sistema", "description": "El país cuenta con apenas 0,16 médicos familiares por cada 10.000 habitantes, una cifra muy alejada de la meta", "url": "https://www.larepublica.co/empresas/el-rosario-lanza-posgrado-en-medicina-familiar-para-descongestionar-el-sistema-4450293", "source": "La República", "publishedAt": "2026-08-03T20:53:44Z"}, {"title": "El Servicio Murciano de Salud refuerza la ciberseguridad de su red sanitaria de la mano de T-Systems", "description": "El Servicio Murciano de Salud (SMS) ha trabajado junto con T-Systems, uno de los principales 'hyperscalares' de 'cloud' europeos, para reforzar la ciberseguridad de sus entornos clínicos con el despliegue de una solución robusta, especializada en la protección y el control de los dispositivos médicos conectados.", "url": "https://www.diariodesevilla.es/empresas-al-dia/servicio-murciano-salud-refuerza-ciberseguridad_0_2007648409.html", "source": "Diario de Sevilla", "publishedAt": "2026-08-03T15:53:32Z"}, {"title": "El Servicio Murciano de Salud refuerza la ciberseguridad de su red sanitaria de la mano de T-Systems", "description": "El Servicio Murciano de Salud (SMS) ha trabajado junto con T-Systems, uno de los principales 'hyperscalares' de 'cloud' europeos, para reforzar la ciberseguridad de sus entornos clínicos con el despliegue de una solución robusta, especializada en la protección y el control de los dispositivos médicos conectados.", "url": "https://www.vozpopuli.com/sanitatem/el-servicio-murciano-de-salud-refuerza-la-ciberseguridad-de-su-red-sanitaria-de-la-mano-de-t-systems.html", "source": "Vozpópuli", "publishedAt": "2026-08-03T14:49:57Z"}]}}}</script>
 <script>
 const DATA = JSON.parse(document.getElementById('datos-noticias').textContent);
 const UNI_KEYS = ['inversion','negocios','tecnologia','geopolitica','cripto','medicina'];
@@ -297,6 +383,15 @@ const FAV_KEY = 'uni_favoritos';
 let vista = 'inicio';
 let subcategoria = 'todas';
 let filtro = '';
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
 
 function leerFavoritos() {
   try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
@@ -308,7 +403,7 @@ function guardarFavoritos(favs) {
 function esFavorito(url) {
   return leerFavoritos().some(f => f.url === url);
 }
-function toggleFavorito(articulo) {
+function toggleFavorito(articulo, btnEl) {
   let favs = leerFavoritos();
   if (esFavorito(articulo.url)) {
     favs = favs.filter(f => f.url !== articulo.url);
@@ -316,6 +411,7 @@ function toggleFavorito(articulo) {
     favs.push(articulo);
   }
   guardarFavoritos(favs);
+  btnEl.classList.add('pop');
   render();
 }
 
@@ -325,6 +421,13 @@ function formatearFecha(iso) {
   return d.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+function moverIndicador(btn) {
+  const indicator = document.getElementById('pillIndicator');
+  if (!btn) { indicator.style.width = '0px'; return; }
+  indicator.style.left = btn.offsetLeft + 'px';
+  indicator.style.width = btn.offsetWidth + 'px';
+}
+
 function construirTabs() {
   const tabs = document.getElementById('mainTabs');
   const items = [
@@ -332,14 +435,17 @@ function construirTabs() {
     { id: 'uni', label: 'UNI' },
     { id: 'favoritos', label: 'Guardadas' },
   ];
-  tabs.innerHTML = '';
+  tabs.querySelectorAll('button').forEach(b => b.remove());
+  let activo = null;
   items.forEach(it => {
     const btn = document.createElement('button');
     btn.textContent = it.label;
     btn.className = vista === it.id ? 'active' : '';
     btn.onclick = () => { vista = it.id; subcategoria = 'todas'; render(); };
     tabs.appendChild(btn);
+    if (vista === it.id) activo = btn;
   });
+  requestAnimationFrame(() => moverIndicador(activo));
 }
 
 function construirSubchips() {
@@ -363,26 +469,59 @@ function construirSubchips() {
   });
 }
 
-function tarjeta(a) {
+function tarjetaFavBtn(a) {
   const fav = esFavorito(a.url);
+  const btn = document.createElement('button');
+  btn.className = 'fav-btn' + (fav ? ' on' : '');
+  btn.innerHTML = `<span class="star">${fav ? '★' : '☆'}</span> ${fav ? 'Guardada' : 'Guardar'}`;
+  btn.onclick = () => toggleFavorito(a, btn);
+  return btn;
+}
+
+function tarjeta(a, indice) {
   const div = document.createElement('div');
   div.className = 'card';
+  div.style.setProperty('--delay', Math.min((indice % 6) * 0.06, 0.36) + 's');
   div.innerHTML = `
     <div class="cat-tag">${a._catLabel || ''}</div>
     <h3><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a></h3>
     <p class="desc">${a.description || ''}</p>
-    <div class="meta-row">
-      <span>${a.source} · ${formatearFecha(a.publishedAt)}</span>
-      <div class="actions">
-        <button class="fav-btn ${fav ? 'on' : ''}">${fav ? '★ Guardada' : '☆ Guardar'}</button>
-      </div>
-    </div>
+    <div class="meta-row"><span>${a.source} · ${formatearFecha(a.publishedAt)}</span></div>
   `;
-  div.querySelector('.fav-btn').onclick = () => toggleFavorito(a);
+  div.querySelector('.meta-row').appendChild(tarjetaFavBtn(a));
+  observer.observe(div);
   return div;
 }
 
-function seccion(titulo, articulos) {
+function hero(a) {
+  const wrap = document.createElement('div');
+  wrap.className = 'hero';
+  const card = document.createElement('div');
+  card.className = 'hero-card';
+  card.innerHTML = `
+    <span class="hero-tag">${a._catLabel || 'Destacada'}</span>
+    <h2><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a></h2>
+    <p>${a.description || ''}</p>
+    <div class="hero-meta"><span>${a.source} · ${formatearFecha(a.publishedAt)}</span></div>
+  `;
+  const favBtn = tarjetaFavBtn(a);
+  favBtn.style.marginLeft = '10px';
+  card.querySelector('.hero-meta').appendChild(favBtn);
+  wrap.appendChild(card);
+
+  wrap.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `rotateY(${x * 5}deg) rotateX(${-y * 5}deg)`;
+  });
+  wrap.addEventListener('mouseleave', () => {
+    card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+  });
+  return wrap;
+}
+
+function seccion(titulo, articulos, indiceInicial) {
   const wrap = document.createElement('div');
   const h = document.createElement('div');
   h.className = 'section-title';
@@ -392,14 +531,14 @@ function seccion(titulo, articulos) {
   if (articulos.length === 0) {
     const vacio = document.createElement('div');
     vacio.className = 'empty-state';
-    vacio.textContent = 'No hay noticias que mostrar aquí.';
+    vacio.textContent = 'No hay noticias que mostrar aquí por ahora.';
     wrap.appendChild(vacio);
     return wrap;
   }
 
   const grid = document.createElement('div');
   grid.className = 'grid';
-  articulos.forEach(a => grid.appendChild(tarjeta(a)));
+  articulos.forEach((a, i) => grid.appendChild(tarjeta(a, (indiceInicial || 0) + i)));
   wrap.appendChild(grid);
   return wrap;
 }
@@ -421,17 +560,27 @@ function render() {
   main.innerHTML = '';
 
   if (vista === 'inicio') {
-    const arts = DATA.categorias['inicio'].articles.map(a => ({ ...a, _catLabel: 'Inicio' }));
-    main.appendChild(seccion('Últimas noticias', aplicarFiltro(arts)));
+    const arts = aplicarFiltro(DATA.categorias['inicio'].articles.map(a => ({ ...a, _catLabel: 'Inicio' })));
+    if (arts.length === 0) {
+      main.appendChild(seccion('Últimas noticias', []));
+    } else {
+      main.appendChild(hero(arts[0]));
+      main.appendChild(seccion('Más noticias', arts.slice(1)));
+    }
   } else if (vista === 'uni') {
     if (subcategoria === 'todas') {
       UNI_KEYS.forEach(k => {
-        const arts = DATA.categorias[k].articles.map(a => ({ ...a, _catLabel: DATA.categorias[k].label }));
-        main.appendChild(seccion(DATA.categorias[k].label, aplicarFiltro(arts)));
+        const arts = aplicarFiltro(DATA.categorias[k].articles.map(a => ({ ...a, _catLabel: DATA.categorias[k].label })));
+        main.appendChild(seccion(DATA.categorias[k].label, arts));
       });
     } else {
-      const arts = DATA.categorias[subcategoria].articles.map(a => ({ ...a, _catLabel: DATA.categorias[subcategoria].label }));
-      main.appendChild(seccion(DATA.categorias[subcategoria].label, aplicarFiltro(arts)));
+      const arts = aplicarFiltro(DATA.categorias[subcategoria].articles.map(a => ({ ...a, _catLabel: DATA.categorias[subcategoria].label })));
+      if (arts.length === 0) {
+        main.appendChild(seccion(DATA.categorias[subcategoria].label, []));
+      } else {
+        main.appendChild(hero(arts[0]));
+        main.appendChild(seccion('Más en ' + DATA.categorias[subcategoria].label, arts.slice(1)));
+      }
     }
   } else if (vista === 'favoritos') {
     main.appendChild(seccion('Tus noticias guardadas', aplicarFiltro(leerFavoritos())));
@@ -443,9 +592,19 @@ document.getElementById('buscador').addEventListener('input', (e) => {
   render();
 });
 
-const tickerItems = UNI_KEYS.map(k => DATA.categorias[k].label);
-document.getElementById('tickerText').innerHTML =
-  (tickerItems.concat(tickerItems)).map(t => `<span><span class="dot">●</span> ${t}</span>`).join('');
+const searchIcon = document.getElementById('searchIcon');
+const searchPill = document.getElementById('searchPill');
+searchIcon.addEventListener('click', () => {
+  searchPill.classList.toggle('open');
+  if (searchPill.classList.contains('open')) {
+    document.getElementById('buscador').focus();
+  }
+});
+
+window.addEventListener('resize', () => {
+  const activo = document.querySelector('nav.tabs button.active');
+  moverIndicador(activo);
+});
 
 render();
 </script>
