@@ -1,26 +1,30 @@
 """
 Genera index.html con:
 - Sección "Inicio": titulares generales recientes.
-- Sección "UNI": inversiones, negocios, tecnología, política internacional, cripto y medicina.
+- Sección "UNI": inversión, negocios, tecnología, política internacional, cripto y medicina.
 
 La API key se lee de la variable de entorno GNEWS_API_KEY (secret de GitHub Actions).
+
+Nota: el plan gratuito de GNews permite solo 1 petición por segundo, por eso este
+script espera un poco entre cada categoría y reintenta si detecta un bloqueo (429).
 """
 
 import os
 import sys
 import json
+import time
 import requests
 from datetime import datetime, timezone
 
 API_KEY = os.environ.get("GNEWS_API_KEY")
 LANG = os.environ.get("NEWS_LANG", "es")
 MAX_PER_CATEGORY = 8
+PAUSA_ENTRE_PETICIONES = 1.3  # segundos, margen sobre el límite de 1 req/seg del plan free
 
 if not API_KEY:
     print("ERROR: falta la variable de entorno GNEWS_API_KEY")
     sys.exit(1)
 
-# Categorías: clave interna -> (etiqueta visible, query de búsqueda; None = top-headlines)
 CATEGORIAS = {
     "inicio":      ("Inicio",                 None),
     "inversion":   ("Inversión",               "inversiones OR mercados financieros OR bolsa"),
@@ -32,7 +36,7 @@ CATEGORIAS = {
 }
 
 
-def obtener_noticias(query):
+def obtener_noticias(query, intentos=3):
     if query is None:
         endpoint = "https://gnews.io/api/v4/top-headlines"
         params = {"lang": LANG, "max": MAX_PER_CATEGORY, "apikey": API_KEY}
@@ -40,25 +44,39 @@ def obtener_noticias(query):
         endpoint = "https://gnews.io/api/v4/search"
         params = {"q": query, "lang": LANG, "max": MAX_PER_CATEGORY, "apikey": API_KEY}
 
-    resp = requests.get(endpoint, params=params, timeout=30)
-    resp.raise_for_status()
-    articulos = resp.json().get("articles", [])
+    ultimo_error = None
+    for intento in range(1, intentos + 1):
+        resp = requests.get(endpoint, params=params, timeout=30)
+        if resp.status_code == 429:
+            espera = 2 * intento
+            print(f"  Límite de velocidad alcanzado, reintentando en {espera}s...")
+            time.sleep(espera)
+            ultimo_error = "429 Too Many Requests"
+            continue
+        try:
+            resp.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            ultimo_error = str(e)
+            break
+        articulos = resp.json().get("articles", [])
+        limpios = []
+        for a in articulos:
+            limpios.append({
+                "title": a.get("title") or "Sin título",
+                "description": a.get("description") or "",
+                "url": a.get("url") or "#",
+                "source": (a.get("source") or {}).get("name", "Fuente desconocida"),
+                "publishedAt": a.get("publishedAt") or "",
+            })
+        return limpios
 
-    limpios = []
-    for a in articulos:
-        limpios.append({
-            "title": a.get("title") or "Sin título",
-            "description": a.get("description") or "",
-            "url": a.get("url") or "#",
-            "source": (a.get("source") or {}).get("name", "Fuente desconocida"),
-            "publishedAt": a.get("publishedAt") or "",
-        })
-    return limpios
+    raise requests.exceptions.RequestException(ultimo_error or "fallo desconocido")
 
 
 def construir_datos():
     datos = {"generated_at": datetime.now(timezone.utc).isoformat(), "categorias": {}}
-    for clave, (etiqueta, query) in CATEGORIAS.items():
+    claves = list(CATEGORIAS.items())
+    for i, (clave, (etiqueta, query)) in enumerate(claves):
         print(f"Consultando categoría: {etiqueta}...")
         try:
             articulos = obtener_noticias(query)
@@ -66,6 +84,8 @@ def construir_datos():
             print(f"  Aviso: fallo al traer '{etiqueta}': {e}")
             articulos = []
         datos["categorias"][clave] = {"label": etiqueta, "articles": articulos}
+        if i < len(claves) - 1:
+            time.sleep(PAUSA_ENTRE_PETICIONES)
     return datos
 
 
@@ -76,17 +96,16 @@ PLANTILLA = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UNI — Noticias</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0E1116;
-  --surface: #161B22;
-  --surface-2: #1D232C;
-  --ink: #E8E6E1;
-  --muted: #8B93A1;
-  --gold: #C9A227;
-  --teal: #2FA8A0;
-  --rule: #262B33;
+  --bg: #F2F2F0;
+  --surface: #FFFFFF;
+  --ink: #17171A;
+  --ink-soft: #2B2B30;
+  --muted: #75757D;
+  --border: #E2E2E0;
+  --accent-soft: #EAEAE8;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -95,197 +114,278 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: 'Inter', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; }
+button { font-family: inherit; }
 
-.ticker-wrap {
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--rule);
-  overflow: hidden;
-  white-space: nowrap;
-  padding: 7px 0;
-}
-.ticker {
-  display: inline-block;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-  animation: scroll-left 32s linear infinite;
-}
-.ticker span { margin-right: 40px; }
-.ticker .dot { color: var(--gold); }
-@keyframes scroll-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .ticker { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
+/* ---------- Masthead ---------- */
 header {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: rgba(14,17,22,0.92);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--rule);
+  z-index: 20;
+  background: rgba(242,242,240,0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
 }
-.header-inner {
-  max-width: 980px;
+.masthead {
+  max-width: 720px;
   margin: 0 auto;
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
+  padding: 26px 20px 10px;
+  text-align: center;
 }
-.brand {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-family: 'Space Grotesk', sans-serif;
+.masthead .logo {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+  animation: caer 0.6s ease;
 }
-.brand .mark {
-  font-weight: 700;
-  font-size: 1.5rem;
-  letter-spacing: 1px;
-  background: linear-gradient(120deg, var(--gold), var(--teal));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.brand .sub {
-  font-size: 0.75rem;
+.masthead .tagline {
+  font-size: 0.78rem;
   color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
+  margin: 4px 0 18px;
 }
-nav.tabs {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-nav.tabs button {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--muted);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 7px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-nav.tabs button:hover { color: var(--ink); border-color: var(--rule); }
-nav.tabs button.active {
-  color: var(--bg);
-  background: var(--gold);
+@keyframes caer {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.search-row {
-  max-width: 980px;
-  margin: 20px auto 0;
+nav.tabs {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px;
+}
+nav.tabs .pill-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 999px;
+  background: var(--ink);
+  transition: left 0.35s cubic-bezier(0.65,0,0.35,1), width 0.35s cubic-bezier(0.65,0,0.35,1);
+  z-index: 0;
+}
+nav.tabs button {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  padding: 8px 17px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+nav.tabs button.active { color: #fff; }
+nav.tabs button:hover:not(.active) { color: var(--ink); }
+
+.search-wrap {
+  max-width: 720px;
+  margin: 12px auto 0;
   padding: 0 20px;
   display: flex;
-  gap: 10px;
+  justify-content: center;
 }
-.search-row input {
-  flex: 1;
+.search-pill {
+  display: flex;
+  align-items: center;
   background: var(--surface);
-  border: 1px solid var(--rule);
-  color: var(--ink);
-  padding: 11px 16px;
-  border-radius: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  transition: box-shadow 0.25s ease;
 }
-.search-row input:focus {
+.search-pill.open { box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+.search-icon {
+  background: none;
+  border: none;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.search-icon svg { width: 16px; height: 16px; }
+.search-pill input {
+  border: none;
   outline: none;
-  border-color: var(--teal);
+  background: transparent;
+  font-size: 0.85rem;
+  width: 0;
+  padding: 0;
+  transition: width 0.3s ease, padding 0.3s ease;
+  color: var(--ink);
+}
+.search-pill.open input {
+  width: 220px;
+  padding: 9px 14px 9px 0;
 }
 
 .subchips {
-  max-width: 980px;
+  max-width: 720px;
   margin: 14px auto 0;
   padding: 0 20px;
   display: none;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.subchips::-webkit-scrollbar { display: none; }
 .subchips.visible { display: flex; }
 .subchips button {
+  flex-shrink: 0;
   background: var(--surface);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--border);
   color: var(--muted);
   font-size: 0.78rem;
-  font-family: 'JetBrains Mono', monospace;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 6px 13px;
+  border-radius: 999px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
-.subchips button.active {
-  border-color: var(--teal);
-  color: var(--teal);
-}
+.subchips button:hover { border-color: var(--ink); color: var(--ink); }
+.subchips button.active { border-color: var(--ink); color: #fff; background: var(--ink); }
 
+/* ---------- Main ---------- */
 main {
-  max-width: 980px;
-  margin: 24px auto 80px;
+  max-width: 860px;
+  margin: 30px auto 90px;
   padding: 0 20px;
 }
+
+/* Featured / hero */
+.hero {
+  perspective: 900px;
+  margin-bottom: 34px;
+}
+.hero-card {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 22px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out;
+  opacity: 0;
+  animation: entrarHero 0.6s ease forwards 0.1s;
+}
+@keyframes entrarHero {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #C9C9CC;
+  border: 1px solid #3A3A40;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+}
+.hero-card h2 {
+  font-size: 1.6rem;
+  line-height: 1.3;
+  margin: 0 0 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.hero-card h2 a { text-decoration: none; color: #fff; }
+.hero-card h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.hero-card p {
+  color: #B9B9BE;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  max-width: 560px;
+}
+.hero-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.76rem;
+  color: #9C9CA1;
+}
+
+/* Section titles */
 .section-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   margin: 30px 0 14px;
-  color: var(--ink);
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .section-title .count {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 0.7rem;
   color: var(--muted);
   font-weight: 400;
+  background: var(--accent-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
 }
+
 .card {
   background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
   padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  gap: 9px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s ease, transform 0.55s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition-delay: var(--delay, 0s);
 }
-.card:hover { border-color: var(--teal); transform: translateY(-2px); }
+.card.visible { opacity: 1; transform: translateY(0); }
+.card:hover {
+  border-color: #CFCFCC;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+  transform: translateY(-3px);
+}
 .card .cat-tag {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--gold);
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  font-weight: 600;
 }
 .card h3 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   margin: 0;
 }
 .card h3 a { text-decoration: none; }
-.card h3 a:hover { color: var(--teal); }
+.card h3 a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .card p.desc {
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   color: var(--muted);
   margin: 0;
   line-height: 1.5;
@@ -295,62 +395,68 @@ main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
+  font-size: 0.71rem;
   color: var(--muted);
-  margin-top: 4px;
+  margin-top: 2px;
   gap: 8px;
   flex-wrap: wrap;
 }
-.card .actions button {
-  background: var(--surface-2);
-  border: 1px solid var(--rule);
+
+.fav-btn {
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
   color: var(--muted);
-  font-size: 0.72rem;
-  padding: 5px 10px;
-  border-radius: 7px;
+  font-size: 0.73rem;
+  padding: 5px 11px;
+  border-radius: 999px;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
-.card .actions button:hover { color: var(--ink); border-color: var(--muted); }
-.card .actions button.on {
-  color: var(--gold);
-  border-color: var(--gold);
+.fav-btn:hover { border-color: var(--ink); color: var(--ink); }
+.fav-btn.on { color: #fff; background: var(--ink); border-color: var(--ink); }
+.fav-btn .star {
+  display: inline-block;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
 }
+.fav-btn.pop .star { transform: rotate(-25deg) scale(1.35); }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 50px 20px;
   color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+  opacity: 0;
+  animation: entrarHero 0.4s ease forwards;
 }
 
 footer {
   text-align: center;
   padding: 30px 20px 50px;
   color: var(--muted);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
+  font-size: 0.72rem;
 }
 </style>
 </head>
 <body>
 
-<div class="ticker-wrap">
-  <div class="ticker" id="tickerText"></div>
-</div>
-
 <header>
-  <div class="header-inner">
-    <div class="brand">
-      <span class="mark">UNI</span>
-      <span class="sub">actualizado __FECHA__</span>
-    </div>
-    <nav class="tabs" id="mainTabs"></nav>
+  <div class="masthead">
+    <h1 class="logo">UNI</h1>
+    <p class="tagline">actualizado __FECHA__</p>
+    <nav class="tabs" id="mainTabs">
+      <div class="pill-indicator" id="pillIndicator"></div>
+    </nav>
   </div>
-  <div class="search-row">
-    <input type="text" id="buscador" placeholder="Buscar noticias por palabra clave...">
+  <div class="search-wrap">
+    <div class="search-pill" id="searchPill">
+      <button class="search-icon" id="searchIcon" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <input type="text" id="buscador" placeholder="Buscar por palabra clave...">
+    </div>
   </div>
   <div class="subchips" id="subchips"></div>
 </header>
@@ -369,6 +475,15 @@ let vista = 'inicio';
 let subcategoria = 'todas';
 let filtro = '';
 
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
 function leerFavoritos() {
   try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
   catch { return []; }
@@ -379,7 +494,7 @@ function guardarFavoritos(favs) {
 function esFavorito(url) {
   return leerFavoritos().some(f => f.url === url);
 }
-function toggleFavorito(articulo) {
+function toggleFavorito(articulo, btnEl) {
   let favs = leerFavoritos();
   if (esFavorito(articulo.url)) {
     favs = favs.filter(f => f.url !== articulo.url);
@@ -387,6 +502,7 @@ function toggleFavorito(articulo) {
     favs.push(articulo);
   }
   guardarFavoritos(favs);
+  btnEl.classList.add('pop');
   render();
 }
 
@@ -396,6 +512,13 @@ function formatearFecha(iso) {
   return d.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+function moverIndicador(btn) {
+  const indicator = document.getElementById('pillIndicator');
+  if (!btn) { indicator.style.width = '0px'; return; }
+  indicator.style.left = btn.offsetLeft + 'px';
+  indicator.style.width = btn.offsetWidth + 'px';
+}
+
 function construirTabs() {
   const tabs = document.getElementById('mainTabs');
   const items = [
@@ -403,14 +526,17 @@ function construirTabs() {
     { id: 'uni', label: 'UNI' },
     { id: 'favoritos', label: 'Guardadas' },
   ];
-  tabs.innerHTML = '';
+  tabs.querySelectorAll('button').forEach(b => b.remove());
+  let activo = null;
   items.forEach(it => {
     const btn = document.createElement('button');
     btn.textContent = it.label;
     btn.className = vista === it.id ? 'active' : '';
     btn.onclick = () => { vista = it.id; subcategoria = 'todas'; render(); };
     tabs.appendChild(btn);
+    if (vista === it.id) activo = btn;
   });
+  requestAnimationFrame(() => moverIndicador(activo));
 }
 
 function construirSubchips() {
@@ -434,26 +560,59 @@ function construirSubchips() {
   });
 }
 
-function tarjeta(a) {
+function tarjetaFavBtn(a) {
   const fav = esFavorito(a.url);
+  const btn = document.createElement('button');
+  btn.className = 'fav-btn' + (fav ? ' on' : '');
+  btn.innerHTML = `<span class="star">${fav ? '★' : '☆'}</span> ${fav ? 'Guardada' : 'Guardar'}`;
+  btn.onclick = () => toggleFavorito(a, btn);
+  return btn;
+}
+
+function tarjeta(a, indice) {
   const div = document.createElement('div');
   div.className = 'card';
+  div.style.setProperty('--delay', Math.min((indice % 6) * 0.06, 0.36) + 's');
   div.innerHTML = `
     <div class="cat-tag">${a._catLabel || ''}</div>
     <h3><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a></h3>
     <p class="desc">${a.description || ''}</p>
-    <div class="meta-row">
-      <span>${a.source} · ${formatearFecha(a.publishedAt)}</span>
-      <div class="actions">
-        <button class="fav-btn ${fav ? 'on' : ''}">${fav ? '★ Guardada' : '☆ Guardar'}</button>
-      </div>
-    </div>
+    <div class="meta-row"><span>${a.source} · ${formatearFecha(a.publishedAt)}</span></div>
   `;
-  div.querySelector('.fav-btn').onclick = () => toggleFavorito(a);
+  div.querySelector('.meta-row').appendChild(tarjetaFavBtn(a));
+  observer.observe(div);
   return div;
 }
 
-function seccion(titulo, articulos) {
+function hero(a) {
+  const wrap = document.createElement('div');
+  wrap.className = 'hero';
+  const card = document.createElement('div');
+  card.className = 'hero-card';
+  card.innerHTML = `
+    <span class="hero-tag">${a._catLabel || 'Destacada'}</span>
+    <h2><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a></h2>
+    <p>${a.description || ''}</p>
+    <div class="hero-meta"><span>${a.source} · ${formatearFecha(a.publishedAt)}</span></div>
+  `;
+  const favBtn = tarjetaFavBtn(a);
+  favBtn.style.marginLeft = '10px';
+  card.querySelector('.hero-meta').appendChild(favBtn);
+  wrap.appendChild(card);
+
+  wrap.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `rotateY(${x * 5}deg) rotateX(${-y * 5}deg)`;
+  });
+  wrap.addEventListener('mouseleave', () => {
+    card.style.transform = 'rotateY(0deg) rotateX(0deg)';
+  });
+  return wrap;
+}
+
+function seccion(titulo, articulos, indiceInicial) {
   const wrap = document.createElement('div');
   const h = document.createElement('div');
   h.className = 'section-title';
@@ -463,14 +622,14 @@ function seccion(titulo, articulos) {
   if (articulos.length === 0) {
     const vacio = document.createElement('div');
     vacio.className = 'empty-state';
-    vacio.textContent = 'No hay noticias que mostrar aquí.';
+    vacio.textContent = 'No hay noticias que mostrar aquí por ahora.';
     wrap.appendChild(vacio);
     return wrap;
   }
 
   const grid = document.createElement('div');
   grid.className = 'grid';
-  articulos.forEach(a => grid.appendChild(tarjeta(a)));
+  articulos.forEach((a, i) => grid.appendChild(tarjeta(a, (indiceInicial || 0) + i)));
   wrap.appendChild(grid);
   return wrap;
 }
@@ -492,17 +651,27 @@ function render() {
   main.innerHTML = '';
 
   if (vista === 'inicio') {
-    const arts = DATA.categorias['inicio'].articles.map(a => ({ ...a, _catLabel: 'Inicio' }));
-    main.appendChild(seccion('Últimas noticias', aplicarFiltro(arts)));
+    const arts = aplicarFiltro(DATA.categorias['inicio'].articles.map(a => ({ ...a, _catLabel: 'Inicio' })));
+    if (arts.length === 0) {
+      main.appendChild(seccion('Últimas noticias', []));
+    } else {
+      main.appendChild(hero(arts[0]));
+      main.appendChild(seccion('Más noticias', arts.slice(1)));
+    }
   } else if (vista === 'uni') {
     if (subcategoria === 'todas') {
       UNI_KEYS.forEach(k => {
-        const arts = DATA.categorias[k].articles.map(a => ({ ...a, _catLabel: DATA.categorias[k].label }));
-        main.appendChild(seccion(DATA.categorias[k].label, aplicarFiltro(arts)));
+        const arts = aplicarFiltro(DATA.categorias[k].articles.map(a => ({ ...a, _catLabel: DATA.categorias[k].label })));
+        main.appendChild(seccion(DATA.categorias[k].label, arts));
       });
     } else {
-      const arts = DATA.categorias[subcategoria].articles.map(a => ({ ...a, _catLabel: DATA.categorias[subcategoria].label }));
-      main.appendChild(seccion(DATA.categorias[subcategoria].label, aplicarFiltro(arts)));
+      const arts = aplicarFiltro(DATA.categorias[subcategoria].articles.map(a => ({ ...a, _catLabel: DATA.categorias[subcategoria].label })));
+      if (arts.length === 0) {
+        main.appendChild(seccion(DATA.categorias[subcategoria].label, []));
+      } else {
+        main.appendChild(hero(arts[0]));
+        main.appendChild(seccion('Más en ' + DATA.categorias[subcategoria].label, arts.slice(1)));
+      }
     }
   } else if (vista === 'favoritos') {
     main.appendChild(seccion('Tus noticias guardadas', aplicarFiltro(leerFavoritos())));
@@ -514,9 +683,19 @@ document.getElementById('buscador').addEventListener('input', (e) => {
   render();
 });
 
-const tickerItems = UNI_KEYS.map(k => DATA.categorias[k].label);
-document.getElementById('tickerText').innerHTML =
-  (tickerItems.concat(tickerItems)).map(t => `<span><span class="dot">●</span> ${t}</span>`).join('');
+const searchIcon = document.getElementById('searchIcon');
+const searchPill = document.getElementById('searchPill');
+searchIcon.addEventListener('click', () => {
+  searchPill.classList.toggle('open');
+  if (searchPill.classList.contains('open')) {
+    document.getElementById('buscador').focus();
+  }
+});
+
+window.addEventListener('resize', () => {
+  const activo = document.querySelector('nav.tabs button.active');
+  moverIndicador(activo);
+});
 
 render();
 </script>
