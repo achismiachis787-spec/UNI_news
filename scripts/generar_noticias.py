@@ -21,6 +21,10 @@ LANG = os.environ.get("NEWS_LANG", "es")
 MAX_PER_CATEGORY = 8
 PAUSA_ENTRE_PETICIONES = 1.3  # segundos, margen sobre el límite de 1 req/seg del plan free
 
+# URL de tu Worker de Cloudflare (ver cloudflare-worker/worker.js).
+# Reemplaza esto por tu URL real una vez que despliegues el Worker.
+CHATBOT_ENDPOINT = "uni-chatbot.achismiachis787.workers.dev"
+
 if not API_KEY:
     print("ERROR: falta la variable de entorno GNEWS_API_KEY")
     sys.exit(1)
@@ -102,7 +106,6 @@ PLANTILLA = """<!DOCTYPE html>
   --bg: #F2F2F0;
   --surface: #FFFFFF;
   --ink: #17171A;
-  --ink-soft: #2B2B30;
   --muted: #75757D;
   --border: #E2E2E0;
   --accent-soft: #EAEAE8;
@@ -126,7 +129,6 @@ button { font-family: inherit; }
   }
 }
 
-/* ---------- Masthead ---------- */
 header {
   position: sticky;
   top: 0;
@@ -263,14 +265,12 @@ nav.tabs button:hover:not(.active) { color: var(--ink); }
 .subchips button:hover { border-color: var(--ink); color: var(--ink); }
 .subchips button.active { border-color: var(--ink); color: #fff; background: var(--ink); }
 
-/* ---------- Main ---------- */
 main {
   max-width: 860px;
   margin: 30px auto 90px;
   padding: 0 20px;
 }
 
-/* Featured / hero */
 .hero {
   perspective: 900px;
   margin-bottom: 34px;
@@ -326,7 +326,6 @@ main {
   color: #9C9CA1;
 }
 
-/* Section titles */
 .section-title {
   font-size: 0.95rem;
   font-weight: 600;
@@ -438,6 +437,133 @@ footer {
   color: var(--muted);
   font-size: 0.72rem;
 }
+
+/* ---------- Chatbot ---------- */
+#chatToggle {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  z-index: 50;
+  transition: transform 0.2s ease;
+}
+#chatToggle:hover { transform: scale(1.06); }
+#chatToggle svg { width: 22px; height: 22px; }
+#chatToggle .icon-close { display: none; }
+#chatToggle.open .icon-chat { display: none; }
+#chatToggle.open .icon-close { display: block; }
+
+#chatPanel {
+  position: fixed;
+  bottom: 88px;
+  right: 22px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  height: 460px;
+  max-height: calc(100vh - 130px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.14);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(14px) scale(0.97);
+  pointer-events: none;
+  transform-origin: bottom right;
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+#chatPanel.open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.chat-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.chat-header .titulo { font-weight: 700; font-size: 0.92rem; }
+.chat-header .subtitulo { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+.chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.msg {
+  max-width: 82%;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  padding: 9px 13px;
+  border-radius: 14px;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: msgIn 0.25s ease forwards;
+}
+@keyframes msgIn { to { opacity: 1; transform: translateY(0); } }
+.msg.bot { align-self: flex-start; background: var(--accent-soft); color: var(--ink); border-bottom-left-radius: 4px; }
+.msg.user { align-self: flex-end; background: var(--ink); color: #fff; border-bottom-right-radius: 4px; }
+
+.msg.typing { display: flex; gap: 4px; align-items: center; padding: 12px 14px; }
+.msg.typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted);
+  animation: rebotar 1s infinite ease-in-out;
+}
+.msg.typing span:nth-child(2) { animation-delay: 0.15s; }
+.msg.typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes rebotar {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.chat-input-row input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 0.83rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.chat-input-row input:focus { border-color: var(--ink); }
+.chat-input-row button {
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.chat-input-row button:hover { transform: scale(1.06); }
+.chat-input-row button svg { width: 15px; height: 15px; }
 </style>
 </head>
 <body>
@@ -464,6 +590,25 @@ footer {
 <main id="main"></main>
 
 <footer>UNI · fuente: GNews API · generado automáticamente cada día</footer>
+
+<button id="chatToggle" aria-label="Abrir asistente">
+  <svg class="icon-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+  <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+</button>
+
+<div id="chatPanel">
+  <div class="chat-header">
+    <div class="titulo">Asistente UNI</div>
+    <div class="subtitulo">Pregúntame por noticias o cómo usar el sitio</div>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Escribe tu pregunta...">
+    <button id="chatSend" aria-label="Enviar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
 
 <script id="datos-noticias" type="application/json">__DATOS_JSON__</script>
 <script>
@@ -698,6 +843,90 @@ window.addEventListener('resize', () => {
 });
 
 render();
+
+/* ---------- Chatbot ---------- */
+const CHATBOT_ENDPOINT = "__CHATBOT_ENDPOINT__";
+
+function construirContextoNoticias() {
+  const lineas = [];
+  for (const clave in DATA.categorias) {
+    const cat = DATA.categorias[clave];
+    cat.articles.forEach(a => {
+      lineas.push(`- [${cat.label}] ${a.title}`);
+    });
+  }
+  return lineas.slice(0, 60).join('\\n');
+}
+const CONTEXTO_NOTICIAS = construirContextoNoticias();
+
+const chatToggle = document.getElementById('chatToggle');
+const chatPanel = document.getElementById('chatPanel');
+const chatBody = document.getElementById('chatBody');
+const chatInput = document.getElementById('chatInput');
+const chatSend = document.getElementById('chatSend');
+
+let chatAbierto = false;
+let chatIniciado = false;
+
+function agregarMensaje(texto, tipo) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + tipo;
+  div.textContent = texto;
+  chatBody.appendChild(div);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  return div;
+}
+
+function mostrarTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg bot typing';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  chatBody.appendChild(div);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  return div;
+}
+
+async function enviarPregunta() {
+  const texto = chatInput.value.trim();
+  if (!texto) return;
+  agregarMensaje(texto, 'user');
+  chatInput.value = '';
+
+  if (!CHATBOT_ENDPOINT || CHATBOT_ENDPOINT.indexOf('REEMPLAZA') !== -1) {
+    agregarMensaje('El asistente todavía no está configurado. Falta conectar la URL del Worker de Cloudflare.', 'bot');
+    return;
+  }
+
+  const typingEl = mostrarTyping();
+  try {
+    const resp = await fetch(CHATBOT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: texto, context: CONTEXTO_NOTICIAS }),
+    });
+    const data = await resp.json();
+    typingEl.remove();
+    agregarMensaje(data.reply || 'No pude generar una respuesta.', 'bot');
+  } catch (e) {
+    typingEl.remove();
+    agregarMensaje('No pude conectar con el asistente. Intenta de nuevo en un momento.', 'bot');
+  }
+}
+
+chatToggle.addEventListener('click', () => {
+  chatAbierto = !chatAbierto;
+  chatToggle.classList.toggle('open', chatAbierto);
+  chatPanel.classList.toggle('open', chatAbierto);
+  if (chatAbierto) {
+    chatInput.focus();
+    if (!chatIniciado) {
+      chatIniciado = true;
+      agregarMensaje('¡Hola! Puedo recomendarte noticias de la página o resolver dudas sobre cómo usarla. ¿En qué te ayudo?', 'bot');
+    }
+  }
+});
+chatSend.addEventListener('click', enviarPregunta);
+chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') enviarPregunta(); });
 </script>
 </body>
 </html>
@@ -710,6 +939,7 @@ def main():
 
     html_final = PLANTILLA.replace("__FECHA__", fecha_legible)
     html_final = html_final.replace("__DATOS_JSON__", json.dumps(datos, ensure_ascii=False))
+    html_final = html_final.replace("__CHATBOT_ENDPOINT__", CHATBOT_ENDPOINT)
 
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html_final)
@@ -720,3 +950,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
