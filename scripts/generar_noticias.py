@@ -23,7 +23,7 @@ PAUSA_ENTRE_PETICIONES = 1.3  # segundos, margen sobre el límite de 1 req/seg d
 
 # URL de tu Worker de Cloudflare (ver cloudflare-worker/worker.js).
 # Reemplaza esto por tu URL real una vez que despliegues el Worker.
-CHATBOT_ENDPOINT = "uni-chatbot.achismiachis787.workers.dev"
+CHATBOT_ENDPOINT = "https://uni-chatbot.achismiachis787.workers.dev"
 
 if not API_KEY:
     print("ERROR: falta la variable de entorno GNEWS_API_KEY")
